@@ -1,0 +1,134 @@
+{
+  "testUsers": [
+    {
+      "id": "user-001",
+      "name": "Test User Primary",
+      "email": "${ZOHO_USER}",
+      "password": "${ZOHO_PASS}",
+      "role": "Employee",
+      "department": "Engineering",
+      "status": "active",
+      "tags": ["primary", "smoke-tests", "integration"]
+    },
+    {
+      "id": "user-002",
+      "name": "Test User Secondary",
+      "email": "secondary-test@zoho.com",
+      "password": "SecondaryTestPass123!",
+      "role": "Employee",
+      "department": "Sales",
+      "status": "active",
+      "tags": ["secondary", "regression"]
+    },
+    {
+      "id": "user-003",
+      "name": "Manager Test User",
+      "email": "manager-test@zoho.com",
+      "password": "ManagerTestPass123!",
+      "role": "Manager",
+      "department": "Engineering",
+      "status": "active",
+      "tags": ["approval-flow", "manager-workflow"]
+    },
+    {
+      "id": "user-004",
+      "name": "Admin Test User",
+      "email": "admin-test@zoho.com",
+      "password": "AdminTestPass123!",
+      "role": "Admin",
+      "department": "HR",
+      "status": "active",
+      "tags": ["admin", "configuration"]
+    }
+  ],
+  "leaveScenarios": [
+    {
+      "id": "leave-001",
+      "name": "Standard Leave Request",
+      "type": "Casual Leave",
+      "days": 1,
+      "startDate": "2026-03-24",
+      "endDate": "2026-03-24",
+      "userId": "user-001",
+      "reason": "Personal work",
+      "status": "draft"
+    },
+    {
+      "id": "leave-002",
+      "name": "Multi-day Leave Request",
+      "type": "Casual Leave",
+      "days": 5,
+      "startDate": "2026-04-01",
+      "endDate": "2026-04-05",
+      "userId": "user-001",
+      "reason": "Vacation",
+      "status": "draft"
+    },
+    {
+      "id": "leave-003",
+      "name": "Sick Leave",
+      "type": "Sick Leave",
+      "days": 1,
+      "startDate": "2026-03-25",
+      "endDate": "2026-03-25",
+      "userId": "user-002",
+      "reason": "Medical appointment",
+      "status": "draft"
+    }
+  ],
+  "leaveBalances": [
+    {
+      "userId": "user-001",
+      "year": 2026,
+      "casualLeave": {
+        "allocated": 8,
+        "used": 2,
+        "pending": 1,
+        "available": 5
+      },
+      "sickLeave": {
+        "allocated": 6,
+        "used": 1,
+        "pending": 0,
+        "available": 5
+      },
+      "unpaidLeave": {
+        "allocated": 0,
+        "used": 0,
+        "pending": 0,
+        "available": 0
+      }
+    },
+    {
+      "userId": "user-002",
+      "year": 2026,
+      "casualLeave": {
+        "allocated": 8,
+        "used": 0,
+        "pending": 1,
+        "available": 7
+      },
+      "sickLeave": {
+        "allocated": 6,
+        "used": 0,
+        "pending": 0,
+        "available": 6
+      }
+    }
+  ],
+  "testEnvironments": [
+    {
+      "name": "Staging",
+      "url": "https://staging-people.zoho.com",
+      "dataRefreshInterval": "daily",
+      "status": "available"
+    },
+    {
+      "name": "Production",
+      "url": "https://people.zoho.com",
+      "dataRefreshInterval": "never",
+      "status": "available",
+      "warning": "Use with caution - affects live data"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "zoho-people-test-data-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server for managing Zoho People test data",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0"
+  },
+  "devDependencies": {
+    "node-mcp-server": "latest"
+  }
+}
