@@ -13,7 +13,8 @@ import io.qameta.allure.*;
 @Feature("Home Page")
 public class HomePageTest extends BaseTest {
 
-    @Test(priority = 1, description = "Verify logged-in user's display name is visible")
+    @TmsLink("ZP-003")
+    @Test(priority = 1, description = "[ZP-003] Verify logged-in user's display name is visible")
     @Story("User Profile Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the logged-in user's name is shown in the Zoho People navigation bar")
@@ -43,7 +44,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("\u2705 Test PASSED: User display name is '" + actualName + "'");
     }
 
-    @Test(priority = 2, description = "Verify profile photo is visible in the header")
+    @TmsLink("ZP-004")
+    @Test(priority = 2, description = "[ZP-004] Verify profile photo is visible in the header")
     @Story("User Profile Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the logged-in user's profile photo/avatar is visible in the Zoho People header")
@@ -64,7 +66,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Profile photo is visible");
     }
 
-    @Test(priority = 3, description = "Verify Reports tab is present in navigation")
+    @TmsLink("ZP-005")
+    @Test(priority = 3, description = "[ZP-005] Verify Reports tab is present in navigation")
     @Story("Navigation Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Reports tab/link is visible and clickable in the Zoho People navigation")
@@ -104,7 +107,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Reports tab present, page content validated, returned to Home");
     }
 
-    @Test(priority = 4, description = "Verify Notification icon button is visible in the header")
+    @TmsLink("ZP-006")
+    @Test(priority = 4, description = "[ZP-006] Verify Notification icon button is visible in the header")
     @Story("Navigation Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the notification bell icon/button is visible in the Zoho People header")
@@ -127,7 +131,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Notification icon is visible");
     }
 
-    @Test(priority = 5, description = "Verify Leave Tracker tab is visible in main navigation")
+    @TmsLink("ZP-007")
+    @Test(priority = 5, description = "[ZP-007] Verify Leave Tracker tab is visible in main navigation")
     @Story("Navigation Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Leave Tracker tab is present in the main navigation bar with the correct label")
@@ -167,7 +172,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Tracker tab visible with label 'Leave Tracker', page content validated, returned to Home");
     }
 
-    @Test(priority = 6, description = "Verify Search Employee icon is visible in the header")
+    @TmsLink("ZP-008")
+    @Test(priority = 6, description = "[ZP-008] Verify Search Employee icon is visible in the header")
     @Story("Navigation Validation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Search Employee icon is visible in the Zoho People top-right navigation")
@@ -188,7 +194,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Search Employee icon is visible");
     }
 
-    @Test(priority = 7, description = "Verify My Space sub-tab is visible on the Home page")
+    @TmsLink("ZP-009")
+    @Test(priority = 7, description = "[ZP-009] Verify My Space sub-tab is visible on the Home page")
     @Story("Home Page Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the My Space sub-tab link is visible and correctly labelled in the Home page header")
@@ -237,7 +244,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: My Space sub-tab present with label 'My Space', profile content validated");
     }
 
-    @Test(priority = 8, description = "Verify greeting card displays the logged-in user's name")
+    @TmsLink("ZP-010")
+    @Test(priority = 8, description = "[ZP-010] Verify greeting card displays the logged-in user's name")
     @Story("Home Page Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Activities greeting card is visible and contains the logged-in user's display name")
@@ -262,7 +270,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Greeting card contains 'Allan the Administrator'");
     }
 
-    @Test(priority = 9, description = "Verify Check-in button is visible on the Home page")
+    @TmsLink("ZP-011")
+    @Test(priority = 9, description = "[ZP-011] Verify Check-in button is visible on the Home page")
     @Story("Home Page Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Check-in button is visible in the My Space attendance section")
@@ -285,7 +294,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Check-in button is visible with label 'Check-in'");
     }
 
-    @Test(priority = 10, description = "Verify Reportees section is visible on the Home page")
+    @TmsLink("ZP-012")
+    @Test(priority = 10, description = "[ZP-012] Verify Reportees section is visible on the Home page")
     @Story("Home Page Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Reportees section panel is visible in the My Space overview for admin accounts")
@@ -312,7 +322,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Reportees section is visible");
     }
 
-    @Test(priority = 11, description = "Verify Activities sub-tab is visible in My Space overview")
+    @TmsLink("ZP-013")
+    @Test(priority = 11, description = "[ZP-013] Verify Activities sub-tab is visible in My Space overview")
     @Story("Home Page Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Activities sub-tab link is visible in the My Space overview section")
@@ -348,7 +359,8 @@ public class HomePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Activities sub-tab visible with label 'Activities', greeting card content validated");
     }
 
-    @Test(priority = 12, description = "Verify Feeds sub-tab is visible in My Space overview")
+    @TmsLink("ZP-014")
+    @Test(priority = 12, description = "[ZP-014] Verify Feeds sub-tab is visible in My Space overview")
     @Story("Home Page Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Feeds sub-tab link is visible in the My Space overview section")

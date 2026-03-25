@@ -27,7 +27,8 @@ public class AttendancePageTest extends BaseTest {
     // Tests
     // ==============================
 
-    @Test(priority = 1, description = "Verify Check-in button is visible on the Home page")
+    @TmsLink("ZP-049")
+    @Test(priority = 1, description = "[ZP-049] Verify Check-in button is visible on the Home page")
     @Story("Attendance Widget")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Check-in button (ZPAtt_check_in_out) is visible in the My Space attendance section")
@@ -54,7 +55,8 @@ public class AttendancePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Check-in button is visible with label 'Check-in'");
     }
 
-    @Test(priority = 2, description = "Verify Attendance tile is present in the Settings service grid")
+    @TmsLink("ZP-050")
+    @Test(priority = 2, description = "[ZP-050] Verify Attendance tile is present in the Settings service grid")
     @Story("Attendance Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Attendance configuration tile is visible in the Settings admin grid")
@@ -78,7 +80,8 @@ public class AttendancePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Attendance tile present in Settings grid");
     }
 
-    @Test(priority = 3, description = "Verify Attendance settings sub-page loads when tile is clicked")
+    @TmsLink("ZP-051")
+    @Test(priority = 3, description = "[ZP-051] Verify Attendance settings sub-page loads when tile is clicked")
     @Story("Attendance Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Attendance settings tile and validates the Attendance admin configuration page loads")
@@ -114,7 +117,8 @@ public class AttendancePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Attendance settings sub-page loaded, URL validated, returned to Settings");
     }
 
-    @Test(priority = 4, description = "Verify Attendance settings page has configuration content")
+    @TmsLink("ZP-052")
+    @Test(priority = 4, description = "[ZP-052] Verify Attendance settings page has configuration content")
     @Story("Attendance Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Attendance admin configuration page shows settings content after navigation")
@@ -147,7 +151,8 @@ public class AttendancePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Attendance settings page has configuration content");
     }
 
-    @Test(priority = 5, description = "Verify navigation back to Home from Attendance settings")
+    @TmsLink("ZP-053")
+    @Test(priority = 5, description = "[ZP-053] Verify navigation back to Home from Attendance settings")
     @Story("Attendance Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that after visiting Attendance settings, the user can return to the Home page")

@@ -27,7 +27,8 @@ public class PeoplePageTest extends BaseTest {
     // Tests
     // ==============================
 
-    @Test(priority = 1, description = "Verify Reportees section shows employee count for admin")
+    @TmsLink("ZP-054")
+    @Test(priority = 1, description = "[ZP-054] Verify Reportees section shows employee count for admin")
     @Story("People Overview")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Reportees panel is visible on the Home page and shows a valid count for an admin")
@@ -58,7 +59,8 @@ public class PeoplePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Reportees panel visible — " + ariaLabel);
     }
 
-    @Test(priority = 2, description = "Verify Employee Information settings tile is in the Settings grid")
+    @TmsLink("ZP-055")
+    @Test(priority = 2, description = "[ZP-055] Verify Employee Information settings tile is in the Settings grid")
     @Story("Employee Information Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Employee Information service tile is present in the Settings services grid")
@@ -83,7 +85,8 @@ public class PeoplePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Employee Information tile present in Settings grid");
     }
 
-    @Test(priority = 3, description = "Verify Employee Information settings sub-page loads")
+    @TmsLink("ZP-056")
+    @Test(priority = 3, description = "[ZP-056] Verify Employee Information settings sub-page loads")
     @Story("Employee Information Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Employee Information settings tile and validates the sub-page loads correctly")
@@ -117,7 +120,8 @@ public class PeoplePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Employee Information settings sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 4, description = "Verify Search Employee icon is visible in navigation")
+    @TmsLink("ZP-057")
+    @Test(priority = 4, description = "[ZP-057] Verify Search Employee icon is visible in navigation")
     @Story("People Overview")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates the Search Employee icon is visible in the Zoho People top navigation")
@@ -141,7 +145,8 @@ public class PeoplePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Search Employee icon visible");
     }
 
-    @Test(priority = 5, description = "Verify org name is displayed in Settings page header")
+    @TmsLink("ZP-058")
+    @Test(priority = 5, description = "[ZP-058] Verify org name is displayed in Settings page header")
     @Story("Employee Information Settings")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates the organisation name heading is displayed on the Settings admin page")

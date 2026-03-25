@@ -12,7 +12,8 @@ import io.qameta.allure.*;
 @Feature("Settings Page")
 public class SettingsPageTest extends BaseTest {
 
-    @Test(priority = 1, description = "Verify Settings (Admin) gear icon is visible in navigation")
+    @TmsLink("ZP-039")
+    @Test(priority = 1, description = "[ZP-039] Verify Settings (Admin) gear icon is visible in navigation")
     @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Settings/Admin gear icon (#zp_maintab_admin) is visible in the top navigation bar")
@@ -34,7 +35,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Settings/Admin gear icon is accessible");
     }
 
-    @Test(priority = 2, description = "Verify navigating to Settings/Admin page")
+    @TmsLink("ZP-040")
+    @Test(priority = 2, description = "[ZP-040] Verify navigating to Settings/Admin page")
     @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Admin/Settings gear icon and validates the page navigates to the admin/settings area")
@@ -63,7 +65,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Settings/Admin page loaded. URL: " + url);
     }
 
-    @Test(priority = 3, description = "Verify Settings/Admin page has visible content")
+    @TmsLink("ZP-041")
+    @Test(priority = 3, description = "[ZP-041] Verify Settings/Admin page has visible content")
     @Story("Settings Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Settings/Admin page displays visible content after navigation")
@@ -100,7 +103,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Settings/Admin page is visible and has content");
     }
 
-    @Test(priority = 4, description = "Verify org name is displayed in the Settings page header")
+    @TmsLink("ZP-042")
+    @Test(priority = 4, description = "[ZP-042] Verify org name is displayed in the Settings page header")
     @Story("Settings Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the organisation name heading is displayed in the Settings page header")
@@ -123,7 +127,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Org name 'Allan's Test Account Org' is displayed");
     }
 
-    @Test(priority = 5, description = "Verify User License Usage widget is visible in Settings")
+    @TmsLink("ZP-043")
+    @Test(priority = 5, description = "[ZP-043] Verify User License Usage widget is visible in Settings")
     @Story("Settings Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the User License Usage widget is visible in the Settings page header section")
@@ -148,7 +153,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: User License Usage widget is visible");
     }
 
-    @Test(priority = 6, description = "Verify Manage Accounts service tile navigates correctly")
+    @TmsLink("ZP-044")
+    @Test(priority = 6, description = "[ZP-044] Verify Manage Accounts service tile navigates correctly")
     @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Manage Accounts tile and validates the sub-page loads with the expected heading")
@@ -192,7 +198,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Manage Accounts tile present, sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 7, description = "Verify Leave Tracker settings tile navigates to Leave configuration")
+    @TmsLink("ZP-045")
+    @Test(priority = 7, description = "[ZP-045] Verify Leave Tracker settings tile navigates to Leave configuration")
     @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Leave Tracker tile and validates the Leave admin settings sub-page loads")
@@ -236,7 +243,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Tracker settings tile present, leave config sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 8, description = "Verify Employee Information settings tile navigates to employee configuration")
+    @TmsLink("ZP-046")
+    @Test(priority = 8, description = "[ZP-046] Verify Employee Information settings tile navigates to employee configuration")
     @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Employee Information tile and validates the admin configuration sub-page loads")
@@ -281,7 +289,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Employee Information tile present, config sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 9, description = "Verify Attendance settings tile navigates to Attendance configuration")
+    @TmsLink("ZP-047")
+    @Test(priority = 9, description = "[ZP-047] Verify Attendance settings tile navigates to Attendance configuration")
     @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Attendance tile and validates the Attendance admin configuration sub-page loads")
@@ -325,7 +334,8 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Attendance tile present, attendance config sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 10, description = "Verify Settings services grid has more than 5 tiles")
+    @TmsLink("ZP-048")
+    @Test(priority = 10, description = "[ZP-048] Verify Settings services grid has more than 5 tiles")
     @Story("Settings Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Settings services grid contains more than 5 service tile headings")

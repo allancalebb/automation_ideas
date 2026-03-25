@@ -16,7 +16,8 @@ import io.qameta.allure.*;
 @Feature("Authentication")
 public class AuthTest extends BaseTest {
 
-    @Test(priority = 1, description = "Verify Zoho People login works with test account")
+    @TmsLink("ZP-001")
+    @Test(priority = 1, description = "[ZP-001] Verify Zoho People login works with test account")
     @Story("User Login Flow")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Verifies that a user can successfully login to Zoho People with valid credentials and reach the dashboard")
@@ -38,7 +39,8 @@ public class AuthTest extends BaseTest {
         System.out.println("✅ Test PASSED: Login successful — Zoho People dashboard reached");
     }
 
-    @Test(priority = 2, description = "Verify logout functionality from Zoho People")
+    @TmsLink("ZP-002")
+    @Test(priority = 2, description = "[ZP-002] Verify logout functionality from Zoho People")
     @Story("User Logout Flow")
     @Severity(SeverityLevel.NORMAL)
     @Description("Verifies logout in a disposable browser context so the main session stays valid for future runs")

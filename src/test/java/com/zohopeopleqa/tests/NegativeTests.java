@@ -35,7 +35,8 @@ public class NegativeTests extends BaseTest {
     // Tests
     // ==============================
 
-    @Test(priority = 1, description = "Verify report search with gibberish returns no matching reports")
+    @TmsLink("ZP-059")
+    @Test(priority = 1, description = "[ZP-059] Verify report search with gibberish returns no matching reports")
     @Story("Search Boundary")
     @Severity(SeverityLevel.NORMAL)
     @Description("Types a non-existent report name and asserts that the report list shows zero or no results")
@@ -78,7 +79,8 @@ public class NegativeTests extends BaseTest {
         System.out.println("✅ Test PASSED: No reports shown for gibberish search input");
     }
 
-    @Test(priority = 2, description = "Verify report search with empty string shows all reports")
+    @TmsLink("ZP-060")
+    @Test(priority = 2, description = "[ZP-060] Verify report search with empty string shows all reports")
     @Story("Search Boundary")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clears the report search field and asserts that reports are shown (list is not empty)")
@@ -106,7 +108,8 @@ public class NegativeTests extends BaseTest {
         System.out.println("✅ Test PASSED: Reports visible with empty search");
     }
 
-    @Test(priority = 3, description = "Verify session is still valid after navigating across multiple modules")
+    @TmsLink("ZP-061")
+    @Test(priority = 3, description = "[ZP-061] Verify session is still valid after navigating across multiple modules")
     @Story("Session Integrity")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Navigates through Home → Leave Tracker → Reports → Settings and verifies the session remains valid on each page")
@@ -154,7 +157,8 @@ public class NegativeTests extends BaseTest {
         System.out.println("✅ Test PASSED: Session remains valid across Home, Leave Tracker, Reports, Settings");
     }
 
-    @Test(priority = 4, description = "Verify user display name is non-empty after module navigation")
+    @TmsLink("ZP-062")
+    @Test(priority = 4, description = "[ZP-062] Verify user display name is non-empty after module navigation")
     @Story("Session Integrity")
     @Severity(SeverityLevel.NORMAL)
     @Description("After navigating away and returning to Home, confirms the user display name is still populated")
@@ -189,7 +193,8 @@ public class NegativeTests extends BaseTest {
         System.out.println("✅ Test PASSED: User display name '" + displayName + "' persists after navigation");
     }
 
-    @Test(priority = 5, description = "Verify Leave Tracker top tabs are all accessible without errors")
+    @TmsLink("ZP-063")
+    @Test(priority = 5, description = "[ZP-063] Verify Leave Tracker top tabs are all accessible without errors")
     @Story("Navigation Edge Cases")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks through all Leave Tracker top-level tabs and checks none result in a blank/error page")

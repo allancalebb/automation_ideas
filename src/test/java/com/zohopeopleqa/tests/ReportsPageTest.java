@@ -12,7 +12,8 @@ import io.qameta.allure.*;
 @Feature("Reports Page")
 public class ReportsPageTest extends BaseTest {
 
-    @Test(priority = 1, description = "Verify Reports tab is visible in navigation")
+    @TmsLink("ZP-026")
+    @Test(priority = 1, description = "[ZP-026] Verify Reports tab is visible in navigation")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Reports tab is present and visible in the main navigation")
@@ -33,7 +34,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Reports tab is visible");
     }
 
-    @Test(priority = 2, description = "Verify navigating to Reports page")
+    @TmsLink("ZP-027")
+    @Test(priority = 2, description = "[ZP-027] Verify navigating to Reports page")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Reports tab and validates the Reports page loads correctly")
@@ -63,7 +65,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Reports page loaded. URL: " + url);
     }
 
-    @Test(priority = 3, description = "Verify Reports page has at least one report category")
+    @TmsLink("ZP-028")
+    @Test(priority = 3, description = "[ZP-028] Verify Reports page has at least one report category")
     @Story("Reports Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Reports page displays at least one report category or report item")
@@ -88,7 +91,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Report categories are visible");
     }
 
-    @Test(priority = 4, description = "Verify My Reports tab is visible on the Reports page")
+    @TmsLink("ZP-029")
+    @Test(priority = 4, description = "[ZP-029] Verify My Reports tab is visible on the Reports page")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the My Reports tab is visible and correctly labelled in the Reports module")
@@ -126,7 +130,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: My Reports tab visible, 'Employee Information' category confirmed");
     }
 
-    @Test(priority = 5, description = "Verify Team Reports tab is visible on the Reports page")
+    @TmsLink("ZP-030")
+    @Test(priority = 5, description = "[ZP-030] Verify Team Reports tab is visible on the Reports page")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Team Reports tab is visible and correctly labelled in the Reports module")
@@ -172,7 +177,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Team Reports tab visible with label 'Team Reports', content validated, returned to My Reports");
     }
 
-    @Test(priority = 6, description = "Verify Organization Reports tab is visible on the Reports page")
+    @TmsLink("ZP-031")
+    @Test(priority = 6, description = "[ZP-031] Verify Organization Reports tab is visible on the Reports page")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Organization Reports tab is visible and correctly labelled in the Reports module")
@@ -218,7 +224,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Organization Reports tab visible with label 'Organization Reports', content validated, returned to My Reports");
     }
 
-    @Test(priority = 7, description = "Verify Analytics tab is visible on the Reports page")
+    @TmsLink("ZP-032")
+    @Test(priority = 7, description = "[ZP-032] Verify Analytics tab is visible on the Reports page")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Analytics tab is visible and correctly labelled in the Reports module")
@@ -265,7 +272,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Analytics tab visible with label 'Analytics', content validated, returned to My Reports");
     }
 
-    @Test(priority = 8, description = "Verify Schedulers tab is visible on the Reports page")
+    @TmsLink("ZP-033")
+    @Test(priority = 8, description = "[ZP-033] Verify Schedulers tab is visible on the Reports page")
     @Story("Reports Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Schedulers tab is visible and correctly labelled in the Reports module")
@@ -312,7 +320,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Schedulers tab visible with label 'Schedulers', content validated, returned to My Reports");
     }
 
-    @Test(priority = 9, description = "Verify Search Reports input field is visible on the Reports page")
+    @TmsLink("ZP-034")
+    @Test(priority = 9, description = "[ZP-034] Verify Search Reports input field is visible on the Reports page")
     @Story("Reports Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Search Reports input field is visible with the correct placeholder text")
@@ -337,7 +346,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Search Reports input is visible with placeholder 'Search Reports'");
     }
 
-    @Test(priority = 10, description = "Verify Access Permissions button is visible on the Reports page")
+    @TmsLink("ZP-035")
+    @Test(priority = 10, description = "[ZP-035] Verify Access Permissions button is visible on the Reports page")
     @Story("Reports Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Access Permissions button is visible on the Reports page (admin-only feature)")
@@ -362,7 +372,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Access Permissions button is visible");
     }
 
-    @Test(priority = 11, description = "Verify Employee Information category is listed in My Reports")
+    @TmsLink("ZP-036")
+    @Test(priority = 11, description = "[ZP-036] Verify Employee Information category is listed in My Reports")
     @Story("Reports Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Employee Information report category heading is listed under My Reports")
@@ -383,7 +394,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Employee Information category is listed");
     }
 
-    @Test(priority = 12, description = "Verify Leave Tracker category is listed in My Reports")
+    @TmsLink("ZP-037")
+    @Test(priority = 12, description = "[ZP-037] Verify Leave Tracker category is listed in My Reports")
     @Story("Reports Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Leave Tracker report category heading is listed under My Reports")
@@ -404,7 +416,8 @@ public class ReportsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Tracker category is listed");
     }
 
-    @Test(priority = 13, description = "Verify Attendance category is listed in My Reports")
+    @TmsLink("ZP-038")
+    @Test(priority = 13, description = "[ZP-038] Verify Attendance category is listed in My Reports")
     @Story("Reports Content")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Attendance report category heading is listed under My Reports")

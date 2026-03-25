@@ -12,7 +12,8 @@ import io.qameta.allure.*;
 @Feature("Leave Page")
 public class LeavePageTest extends BaseTest {
 
-    @Test(priority = 1, description = "Verify Leave Tracker tab is visible in navigation")
+    @TmsLink("ZP-015")
+    @Test(priority = 1, description = "[ZP-015] Verify Leave Tracker tab is visible in navigation")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Leave Tracker navigation tab is present and visible")
@@ -33,7 +34,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Tracker tab is visible");
     }
 
-    @Test(priority = 2, description = "Verify navigating to Leave Tracker page")
+    @TmsLink("ZP-016")
+    @Test(priority = 2, description = "[ZP-016] Verify navigating to Leave Tracker page")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Leave Tracker tab and validates the page loads correctly")
@@ -64,7 +66,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Tracker page loaded. URL: " + url);
     }
 
-    @Test(priority = 3, description = "Verify Leave Balance sub-tab is accessible")
+    @TmsLink("ZP-017")
+    @Test(priority = 3, description = "[ZP-017] Verify Leave Balance sub-tab is accessible")
     @Story("Leave Balance")
     @Severity(SeverityLevel.NORMAL)
     @Description("Clicks the Leave Balance sub-tab and validates the page navigates to the balance URL")
@@ -103,7 +106,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Balance section is accessible. URL: " + url);
     }
 
-    @Test(priority = 4, description = "Verify My Data top-tab is visible on Leave Tracker page")
+    @TmsLink("ZP-018")
+    @Test(priority = 4, description = "[ZP-018] Verify My Data top-tab is visible on Leave Tracker page")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the My Data top-level tab is visible and correctly labelled in the Leave Tracker module")
@@ -141,7 +145,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: My Data tab visible, 'Leave Summary' sub-tab confirmed in nav");
     }
 
-    @Test(priority = 5, description = "Verify Team top-tab is visible on Leave Tracker page")
+    @TmsLink("ZP-019")
+    @Test(priority = 5, description = "[ZP-019] Verify Team top-tab is visible on Leave Tracker page")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Team top-level tab is visible and correctly labelled in the Leave Tracker module")
@@ -188,7 +193,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Team tab visible with label 'Team', Team content validated, returned to My Data");
     }
 
-    @Test(priority = 6, description = "Verify Holidays top-tab is visible on Leave Tracker page")
+    @TmsLink("ZP-020")
+    @Test(priority = 6, description = "[ZP-020] Verify Holidays top-tab is visible on Leave Tracker page")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Holidays top-level tab is visible and correctly labelled in the Leave Tracker module")
@@ -235,7 +241,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Holidays tab visible with label 'Holidays', Holiday content validated, returned to My Data");
     }
 
-    @Test(priority = 7, description = "Verify Leave Summary sub-tab is visible in Leave Tracker")
+    @TmsLink("ZP-021")
+    @Test(priority = 7, description = "[ZP-021] Verify Leave Summary sub-tab is visible in Leave Tracker")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Leave Summary sub-tab is visible in the Leave Tracker My Data section")
@@ -282,7 +289,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Summary sub-tab visible with label 'Leave Summary', Summary content validated");
     }
 
-    @Test(priority = 8, description = "Verify Leave Requests sub-tab is visible in Leave Tracker")
+    @TmsLink("ZP-022")
+    @Test(priority = 8, description = "[ZP-022] Verify Leave Requests sub-tab is visible in Leave Tracker")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Leave Requests sub-tab is visible in the Leave Tracker My Data section")
@@ -329,7 +337,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Leave Requests sub-tab visible with label 'Leave Requests', Requests content validated, returned to Leave Summary");
     }
 
-    @Test(priority = 9, description = "Verify Shift sub-tab is visible in Leave Tracker")
+    @TmsLink("ZP-023")
+    @Test(priority = 9, description = "[ZP-023] Verify Shift sub-tab is visible in Leave Tracker")
     @Story("Leave Navigation")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Shift sub-tab is visible in the Leave Tracker My Data section")
@@ -376,7 +385,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Shift sub-tab visible with label 'Shift', Shift content validated, returned to Leave Summary");
     }
 
-    @Test(priority = 10, description = "Verify Apply Leave button is visible on Leave Summary page")
+    @TmsLink("ZP-024")
+    @Test(priority = 10, description = "[ZP-024] Verify Apply Leave button is visible on Leave Summary page")
     @Story("Leave Summary")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the Apply Leave button is visible on the Leave Summary page")
@@ -408,7 +418,8 @@ public class LeavePageTest extends BaseTest {
         System.out.println("✅ Test PASSED: Apply Leave button is visible with label 'Apply Leave'");
     }
 
-    @Test(priority = 11, description = "Verify Leave booked summary is visible on Leave Summary page")
+    @TmsLink("ZP-025")
+    @Test(priority = 11, description = "[ZP-025] Verify Leave booked summary is visible on Leave Summary page")
     @Story("Leave Summary")
     @Severity(SeverityLevel.NORMAL)
     @Description("Validates that the leave booked summary header is visible on the Leave Summary page")
