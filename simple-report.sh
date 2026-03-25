@@ -27,7 +27,17 @@ TOTAL=$((PASSED + FAILED + SKIPPED))
 
 # Function to extract test name from JSON
 extract_test_name() {
-    grep -o '"testMethod","value":"[^"]*"' "$1" | sed 's/"testMethod","value":"\([^"]*\)"/\1/'
+    python3 -c "
+import json, sys
+try:
+    d = json.load(open('$1'))
+    name = d.get('name', '')
+    if not name:
+        name = next((l['value'] for l in d.get('labels', []) if l['name'] == 'testMethod'), '')
+    print(name)
+except:
+    print('')
+" 2>/dev/null
 }
 
 # Function to extract test status from JSON

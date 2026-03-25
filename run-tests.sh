@@ -71,8 +71,8 @@ mkdir -p "target/allure-results-raw"
 # Generate and display Allure report - pass the FULL path to results directory
 echo "📊 Generating Allure Report: ${REPORT_NAME}..."
 mvn allure:report \
-    -Dallure.results.directory="$(pwd)/${ALLURE_RESULTS_DIR}" \
-    -q 2>/dev/null || true  # Report is generated despite plugin error
+    -Dallure.results.directory="${ALLURE_RESULTS_DIR}" \
+    > /dev/null 2>&1 || true  # Report generates fine; suppress allure-maven path warnings
 
 # Copy generated report to reports directory
 if [ -d "target/site/allure-report" ]; then
