@@ -61,6 +61,18 @@ for f in sorted(files, key=get_start):
 LOG_FILE=$(get_latest_log)
 REPORT_DATE=$(date)
 
+# ── Run-context for the report header ─────────────────────────────────────────
+ENV_NAME=$(grep '^ZOHO_ENV' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+ENV_NAME=${ENV_NAME:-LIVE}
+ZOHO_USER_VAL=$(grep '^ZOHO_USER' .env 2>/dev/null | cut -d= -f2 | tr -d '[:space:]')
+ZOHO_USER_VAL=${ZOHO_USER_VAL:-unknown}
+if [ "$ENV_NAME" = "TEST" ]; then
+    TARGET_URL="https://peoplelabs.zoho.com"
+else
+    TARGET_URL="https://people.zoho.com"
+fi
+RUN_NAME=$(basename "$LATEST_RUN")
+
 # Write HTML header (unquoted HTMLEOF so shell expands $TOTAL/$PASSED/$FAILED)
 cat > "$REPORT_FILE" << HTMLEOF
 <!DOCTYPE html>
@@ -106,15 +118,45 @@ cat > "$REPORT_FILE" << HTMLEOF
         .logs-content { margin-top: 10px; background: #f5f5f5; padding: 15px; border-radius: 4px; border-left: 3px solid #667eea; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
         .error-msg { color: #ef4444; font-size: 12px; margin-top: 8px; }
         .footer { padding: 20px 30px; background: #f9f9f9; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+        .env-bar { display:flex; flex-wrap:wrap; background:#1a1a2e; border-bottom:3px solid #667eea; }
+        .env-item { display:flex; flex-direction:column; padding:12px 24px; border-right:1px solid #2d2d50; }
+        .env-item:last-child { border-right:none; }
+        .env-key { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+        .env-val { font-size:13px; font-weight:600; color:#e2e8f0; }
+        .env-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:700; }
+        .env-badge.LIVE { background:#064e3b; color:#6ee7b7; }
+        .env-badge.TEST { background:#1e3a5f; color:#93c5fd; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Test Report</h1>
-            <p>ZP_SmartTests Execution Results</p>
+            <h1>&#129514; ZP SmartTests &mdash; Execution Report</h1>
+            <p>$REPORT_DATE</p>
         </div>
-        
+        <div class="env-bar">
+            <div class="env-item">
+                <span class="env-key">Environment</span>
+                <span class="env-val"><span class="env-badge $ENV_NAME">$ENV_NAME</span></span>
+            </div>
+            <div class="env-item">
+                <span class="env-key">Target URL</span>
+                <span class="env-val">$TARGET_URL</span>
+            </div>
+            <div class="env-item">
+                <span class="env-key">User</span>
+                <span class="env-val">$ZOHO_USER_VAL</span>
+            </div>
+            <div class="env-item">
+                <span class="env-key">Browser</span>
+                <span class="env-val">Chromium</span>
+            </div>
+            <div class="env-item">
+                <span class="env-key">Run ID</span>
+                <span class="env-val">$RUN_NAME</span>
+            </div>
+        </div>
+
         <div class="summary">
             <div class="stat total"><div class="stat-number">$TOTAL</div><div class="stat-label">Total Tests</div></div>
             <div class="stat passed"><div class="stat-number">$PASSED</div><div class="stat-label">Passed</div></div>

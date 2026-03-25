@@ -37,7 +37,38 @@ public class BaseTest {
     protected static final String SESSION_STATE_FILE = "session-state.json";
     protected static final String SESSION_META_FILE  = "session-meta.json";
 
-    // @BeforeSuite removed — browser is now launched per-class inside loginOnce()
+    private static final String RUN_STARTED_AT =
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+    @BeforeSuite(alwaysRun = true)
+    public static void writeAllureEnvironment() {
+        try {
+            String allureDir = System.getProperty("allure.results.directory",
+                    "target/allure-results");
+            Files.createDirectories(Paths.get(allureDir));
+            String user     = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER", "unknown");
+            boolean headless = Boolean.parseBoolean(
+                    System.getenv().getOrDefault("PLAYWRIGHT_HEADLESS", "false"));
+            String props = String.join("\n",
+                    "Environment="   + Config.ENV.toUpperCase(),
+                    "Target.URL="    + Config.BASE_URL,
+                    "User="          + user,
+                    "Browser=Chromium (Playwright)",
+                    "Headless="      + headless,
+                    "Run.Started="   + RUN_STARTED_AT,
+                    "Java.Version="  + System.getProperty("java.version"),
+                    "OS="            + System.getProperty("os.name") + " " + System.getProperty("os.version")
+            );
+            Files.write(Paths.get(allureDir, "environment.properties"), props.getBytes());
+            System.out.println("[Allure] environment.properties written \u2192 "
+                    + Config.ENV.toUpperCase() + " / " + Config.BASE_URL);
+        } catch (Exception e) {
+            System.out.println("[Allure] Warning: could not write environment.properties: "
+                    + e.getMessage());
+        }
+    }
+
+    // @BeforeSuite above writes Allure environment.properties; browser is launched per-class in loginOnce()
 
     /**
      * Shared session setup — runs once per test class before any @Test methods.
@@ -84,6 +115,15 @@ public class BaseTest {
         page = context.newPage();
         page.setDefaultTimeout(15000);
         page.setDefaultNavigationTimeout(15000);
+
+        // Stamp every test in this class with run-context visible in Allure
+        String zohoUser = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER", "unknown");
+        Allure.label("environment", Config.ENV.toUpperCase());
+        Allure.label("host", Config.BASE_DOMAIN);
+        Allure.parameter("Target Environment", Config.ENV.toUpperCase() + " \u2192 " + Config.BASE_URL);
+        Allure.parameter("Test User",          zohoUser);
+        Allure.parameter("Browser",            "Chromium (Playwright)");
+        Allure.parameter("Run Started",        RUN_STARTED_AT);
 
         // Capture @BeforeClass output so the first test's log file includes login messages
         preTestBuffer = new ByteArrayOutputStream();
