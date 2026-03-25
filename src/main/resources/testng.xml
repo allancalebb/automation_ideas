@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="ZohoPeople Smart Tests" preserve-order="true">
+<suite name="ZohoPeople Smart Tests" parallel="classes" thread-count="4" preserve-order="true">
     <test name="Smart Tests" preserve-order="true">
         <classes>
             <class name="com.zohopeopleqa.tests.HomePageTest"/>
             <class name="com.zohopeopleqa.tests.LeavePageTest"/>
             <class name="com.zohopeopleqa.tests.ReportsPageTest"/>
             <class name="com.zohopeopleqa.tests.SettingsPageTest"/>
+            <class name="com.zohopeopleqa.tests.AttendancePageTest"/>
+            <class name="com.zohopeopleqa.tests.PeoplePageTest"/>
+            <class name="com.zohopeopleqa.tests.NegativeTests"/>
         </classes>
     </test>
 </suite>

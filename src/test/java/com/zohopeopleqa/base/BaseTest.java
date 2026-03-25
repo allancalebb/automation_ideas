@@ -17,11 +17,16 @@ import java.io.PrintStream;
 
 public class BaseTest {
 
-    // Static — one shared instance for the entire suite
-    protected static Playwright playwright;
-    protected static Browser browser;
-    protected static BrowserContext context;
-    protected static Page page;
+    // Instance-level — each test class thread gets its own complete Playwright stack.
+    // Playwright Java is NOT thread-safe across threads; each Playwright instance
+    // must be used from a single thread. This is the correct approach for parallel classes.
+    protected Playwright playwright;
+    protected Browser browser;
+    protected BrowserContext context;
+    protected Page page;
+
+    // Lock for synchronized session-state file I/O only (avoids concurrent write corruption)
+    private static final Object SESSION_LOCK = new Object();
 
     private PrintStream originalOut;
     private FileOutputStream testLogStream;
@@ -31,16 +36,26 @@ public class BaseTest {
     protected static final String SESSION_STATE_FILE = "session-state.json";
     protected static final String SESSION_META_FILE  = "session-meta.json";
 
-    @BeforeSuite
-    public void setupSuite() {
+    // @BeforeSuite removed — browser is now launched per-class inside loginOnce()
+
+    /**
+     * Shared session setup — runs once per test class before any @Test methods.
+     * Reuses saved session if the account matches; falls back to full login otherwise.
+     * All test classes inherit this automatically — no need to override it.
+     */
+    @BeforeClass
+    public void loginOnce() {
+        // Each test class (thread) creates its own Playwright + Browser + Context + Page.
+        // Playwright Java is NOT thread-safe across threads — each instance must be used
+        // from a single thread. Per-instance stacks are the correct parallel approach.
+        boolean headless = Boolean.parseBoolean(
+                System.getenv().getOrDefault("PLAYWRIGHT_HEADLESS", "false"));
         playwright = Playwright.create();
         browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions().setHeadless(false)
+                new BrowserType.LaunchOptions().setHeadless(headless)
         );
+        System.out.println("[" + getClass().getSimpleName() + "] Browser launched (headless=" + headless + ")");
 
-        // Restore saved session cookies if available — avoids a full login.
-        // Also check that the saved session belongs to the same account as ZOHO_USER;
-        // if the account changed, discard the old session and force a fresh login.
         java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
         java.nio.file.Path metaPath    = Paths.get(SESSION_META_FILE);
         String currentUser = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER");
@@ -65,19 +80,10 @@ public class BaseTest {
             }
             context = browser.newContext();
         }
-
         page = context.newPage();
         page.setDefaultTimeout(15000);
         page.setDefaultNavigationTimeout(15000);
-    }
 
-    /**
-     * Shared session setup — runs once per test class before any @Test methods.
-     * Reuses saved session if the account matches; falls back to full login otherwise.
-     * All test classes inherit this automatically — no need to override it.
-     */
-    @BeforeClass
-    public void loginOnce() {
         // Capture @BeforeClass output so the first test's log file includes login messages
         preTestBuffer = new ByteArrayOutputStream();
         originalOut = System.out;
@@ -178,11 +184,12 @@ public class BaseTest {
         // context stays open — shared across all tests in this class
     }
 
-    @AfterSuite
-    public void teardownSuite() {
-        if (context != null) context.close();
-        if (browser != null) browser.close();
-        if (playwright != null) playwright.close();
+    @AfterClass
+    public void teardownContext() {
+        // Tear down the entire per-class Playwright stack
+        if (context != null) { try { context.close(); } catch (Exception ignored) {} context = null; page = null; }
+        if (browser != null)  { try { browser.close();  } catch (Exception ignored) {} browser = null; }
+        if (playwright != null) { try { playwright.close(); } catch (Exception ignored) {} playwright = null; }
     }
 
     /**
@@ -311,15 +318,16 @@ public class BaseTest {
             String finalUrl = page.url();
             System.out.println("✅ Login successful! Landed on: " + finalUrl);
 
-            // Save session cookies so future runs skip full login
-            context.storageState(new BrowserContext.StorageStateOptions()
-                    .setPath(Paths.get(SESSION_STATE_FILE)));
-            // Save the account email so we can detect account changes on the next run
-            try {
-                Files.write(Paths.get(SESSION_META_FILE),
-                        ("{\"user\":\"" + email + "\"}").getBytes());
-            } catch (Exception metaEx) {
-                System.out.println("[Session] Warning: could not write session meta: " + metaEx.getMessage());
+            // Save session cookies — synchronized to prevent concurrent writes on first parallel run
+            synchronized (SESSION_LOCK) {
+                context.storageState(new BrowserContext.StorageStateOptions()
+                        .setPath(Paths.get(SESSION_STATE_FILE)));
+                try {
+                    Files.write(Paths.get(SESSION_META_FILE),
+                            ("{\"user\":\"" + email + "\"}").getBytes());
+                } catch (Exception metaEx) {
+                    System.out.println("[Session] Warning: could not write session meta: " + metaEx.getMessage());
+                }
             }
             System.out.println("[Session] Session state saved for: " + email);
         } catch (PlaywrightException e) {

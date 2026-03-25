@@ -148,12 +148,16 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("✅ Test PASSED: User License Usage widget is visible");
     }
 
-    @Test(priority = 6, description = "Verify Manage Accounts service tile is visible in Settings")
-    @Story("Settings Content")
+    @Test(priority = 6, description = "Verify Manage Accounts service tile navigates correctly")
+    @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Manage Accounts service tile is visible in the Settings services grid")
+    @Description("Clicks the Manage Accounts tile and validates the sub-page loads with the expected heading")
     public void verifyManageAccountsTile() {
-        System.out.println("Verifying Manage Accounts service tile is visible...");
+        System.out.println("Verifying Manage Accounts service tile...");
+
+        // Ensure we are on the Settings page
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
 
         // Confirmed via DOM inspection: h5 "Manage Accounts" inside #servicPageContainer
         page.waitForSelector("#servicPageContainer h5:has-text('Manage Accounts')",
@@ -168,15 +172,36 @@ public class SettingsPageTest extends BaseTest {
                 "Manage Accounts tile text mismatch. Got: '" + actualText + "'");
 
         takeElementScreenshot("#servicPageContainer", "manage_accounts_tile");
-        System.out.println("✅ Test PASSED: Manage Accounts service tile is visible");
+
+        // Click the tile and validate the sub-page URL
+        System.out.println("Clicking Manage Accounts tile to validate navigation...");
+        page.locator("#servicPageContainer h5:has-text('Manage Accounts')").first().click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        String subUrl = page.url();
+        System.out.println("URL after clicking Manage Accounts tile: " + subUrl);
+        Allure.parameter("Manage Accounts sub-page URL", subUrl);
+        Assert.assertTrue(
+                subUrl.contains("account") || subUrl.contains("manage") || subUrl.contains("admin"),
+                "URL after clicking Manage Accounts tile should contain 'account', 'manage', or 'admin'. Got: '" + subUrl + "'");
+        takeScreenshotOnSuccess("manage_accounts_subpage");
+
+        // Return to Settings
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        page.waitForSelector("#servicPageContainer", new Page.WaitForSelectorOptions().setTimeout(10000));
+        System.out.println("✅ Test PASSED: Manage Accounts tile present, sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 7, description = "Verify Leave Tracker service tile is visible in Settings")
-    @Story("Settings Content")
+    @Test(priority = 7, description = "Verify Leave Tracker settings tile navigates to Leave configuration")
+    @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Leave Tracker service tile is visible in the Settings services grid")
+    @Description("Clicks the Leave Tracker tile and validates the Leave admin settings sub-page loads")
     public void verifyLeaveTrackerServiceTile() {
-        System.out.println("Verifying Leave Tracker service tile is visible...");
+        System.out.println("Verifying Leave Tracker service tile...");
+
+        // Ensure we are on the Settings page
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
 
         // Confirmed via DOM inspection: h5 "Leave Tracker" inside #servicPageContainer
         page.waitForSelector("#servicPageContainer h5:has-text('Leave Tracker')",
@@ -191,15 +216,36 @@ public class SettingsPageTest extends BaseTest {
                 "Leave Tracker tile text mismatch. Got: '" + actualText + "'");
 
         takeElementScreenshot("#servicPageContainer", "leave_tracker_service_tile");
-        System.out.println("✅ Test PASSED: Leave Tracker service tile is visible");
+
+        // Click the tile and validate the sub-page URL contains leave-related path
+        System.out.println("Clicking Leave Tracker settings tile to validate navigation...");
+        page.locator("#servicPageContainer h5:has-text('Leave Tracker')").first().click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        String subUrl = page.url();
+        System.out.println("URL after clicking Leave Tracker settings tile: " + subUrl);
+        Allure.parameter("Leave Tracker settings sub-page URL", subUrl);
+        Assert.assertTrue(
+                subUrl.contains("leave") || subUrl.contains("Leave"),
+                "URL after clicking Leave Tracker settings tile should contain 'leave'. Got: '" + subUrl + "'");
+        takeScreenshotOnSuccess("leave_tracker_settings_subpage");
+
+        // Return to Settings
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        page.waitForSelector("#servicPageContainer", new Page.WaitForSelectorOptions().setTimeout(10000));
+        System.out.println("✅ Test PASSED: Leave Tracker settings tile present, leave config sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 8, description = "Verify Employee Information service tile is visible in Settings")
-    @Story("Settings Content")
+    @Test(priority = 8, description = "Verify Employee Information settings tile navigates to employee configuration")
+    @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Employee Information service tile is visible in the Settings services grid")
+    @Description("Clicks the Employee Information tile and validates the admin configuration sub-page loads")
     public void verifyEmployeeInformationTile() {
-        System.out.println("Verifying Employee Information service tile is visible...");
+        System.out.println("Verifying Employee Information service tile...");
+
+        // Ensure we are on the Settings page
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
 
         // Confirmed via DOM inspection: h5 "Employee Information" inside #servicPageContainer
         page.waitForSelector("#servicPageContainer h5:has-text('Employee Information')",
@@ -214,15 +260,37 @@ public class SettingsPageTest extends BaseTest {
                 "Employee Information tile text mismatch. Got: '" + actualText + "'");
 
         takeElementScreenshot("#servicPageContainer", "employee_info_tile");
-        System.out.println("✅ Test PASSED: Employee Information service tile is visible");
+
+        // Click the tile and validate the sub-page URL
+        System.out.println("Clicking Employee Information tile to validate navigation...");
+        page.locator("#servicPageContainer h5:has-text('Employee Information')").first().click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        String subUrl = page.url();
+        System.out.println("URL after clicking Employee Information tile: " + subUrl);
+        Allure.parameter("Employee Information sub-page URL", subUrl);
+        Assert.assertTrue(
+                subUrl.contains("employee") || subUrl.contains("Employee") || subUrl.contains("info")
+                        || subUrl.contains("organization") || subUrl.contains("settings/service"),
+                "URL should navigate to employee/organization settings after clicking Employee Information tile. Got: '" + subUrl + "'");
+        takeScreenshotOnSuccess("employee_info_settings_subpage");
+
+        // Return to Settings
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        page.waitForSelector("#servicPageContainer", new Page.WaitForSelectorOptions().setTimeout(10000));
+        System.out.println("✅ Test PASSED: Employee Information tile present, config sub-page loaded, returned to Settings");
     }
 
-    @Test(priority = 9, description = "Verify Attendance service tile is visible in Settings")
-    @Story("Settings Content")
+    @Test(priority = 9, description = "Verify Attendance settings tile navigates to Attendance configuration")
+    @Story("Settings Navigation")
     @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Attendance service tile is visible in the Settings services grid")
+    @Description("Clicks the Attendance tile and validates the Attendance admin configuration sub-page loads")
     public void verifyAttendanceTile() {
-        System.out.println("Verifying Attendance service tile is visible...");
+        System.out.println("Verifying Attendance service tile...");
+
+        // Ensure we are on the Settings page
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
 
         // Confirmed via DOM inspection: h5 "Attendance" inside #servicPageContainer
         page.waitForSelector("#servicPageContainer h5:has-text('Attendance')",
@@ -237,7 +305,24 @@ public class SettingsPageTest extends BaseTest {
                 "Attendance tile text mismatch. Got: '" + actualText + "'");
 
         takeElementScreenshot("#servicPageContainer", "attendance_tile");
-        System.out.println("✅ Test PASSED: Attendance service tile is visible");
+
+        // Click the tile and validate the sub-page URL
+        System.out.println("Clicking Attendance tile to validate navigation...");
+        page.locator("#servicPageContainer h5:has-text('Attendance')").first().click();
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        String subUrl = page.url();
+        System.out.println("URL after clicking Attendance tile: " + subUrl);
+        Allure.parameter("Attendance settings sub-page URL", subUrl);
+        Assert.assertTrue(
+                subUrl.contains("attendance") || subUrl.contains("Attendance"),
+                "URL should contain 'attendance' after clicking Attendance tile. Got: '" + subUrl + "'");
+        takeScreenshotOnSuccess("attendance_settings_subpage");
+
+        // Return to Settings
+        page.click("#zp_maintab_admin");
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        page.waitForSelector("#servicPageContainer", new Page.WaitForSelectorOptions().setTimeout(10000));
+        System.out.println("✅ Test PASSED: Attendance tile present, attendance config sub-page loaded, returned to Settings");
     }
 
     @Test(priority = 10, description = "Verify Settings services grid has more than 5 tiles")

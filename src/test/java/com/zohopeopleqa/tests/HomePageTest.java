@@ -205,10 +205,11 @@ public class HomePageTest extends BaseTest {
         Allure.parameter("Locator / Condition", locatorUsed);
 
         // Wait for element to be in the DOM (attached), not necessarily visible
+        // Use 30s timeout: parallel execution + SPA re-render can exceed 15s
         page.waitForSelector("#zp_t_home_myspace",
                 new Page.WaitForSelectorOptions()
                         .setState(com.microsoft.playwright.options.WaitForSelectorState.ATTACHED)
-                        .setTimeout(15000));
+                        .setTimeout(30000));
 
         String actualText = ((String) page.evaluate(
                 "document.getElementById('zp_t_home_myspace')?.textContent?.trim() ?? ''"));
