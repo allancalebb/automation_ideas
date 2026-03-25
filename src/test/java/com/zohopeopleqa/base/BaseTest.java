@@ -1,6 +1,7 @@
 package com.zohopeopleqa.base;
 
 import com.microsoft.playwright.*;
+import com.zohopeopleqa.config.Config;
 import org.testng.annotations.*;
 import org.testng.ITestResult;
 import io.qameta.allure.Allure;
@@ -102,9 +103,9 @@ public class BaseTest {
         System.out.println("[Setup] Checking session state...");
         if (Files.exists(Paths.get(SESSION_STATE_FILE))) {
             try {
-                page.navigate("https://people.zoho.com");
+                page.navigate(Config.BASE_URL);
                 page.waitForURL(
-                        url -> url.startsWith("https://people.zoho.com/") &&
+                        url -> url.startsWith(Config.BASE_URL + "/") &&
                                (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
                         new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(10000)
                 );
@@ -204,9 +205,9 @@ public class BaseTest {
         System.out.println("Starting Zoho People login flow...");
         
         // Step 1: Navigate to Zoho People and click Sign In button
-        System.out.println("Step 1: Navigating to https://people.zoho.com");
+        System.out.println("Step 1: Navigating to " + Config.BASE_URL);
         try {
-            page.navigate("https://people.zoho.com");
+            page.navigate(Config.BASE_URL);
             
             // Wait for and click the Sign In button on the marketing page
             System.out.println("Waiting for Sign In button...");
@@ -310,7 +311,7 @@ public class BaseTest {
         System.out.println("Step 5: Waiting for Zoho People dashboard to load");
         try {
             page.waitForURL(
-                    url -> url.startsWith("https://people.zoho.com/") &&
+                    url -> url.startsWith(Config.BASE_URL + "/") &&
                            (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
                     new Page.WaitForURLOptions().setTimeout(15000)
             );

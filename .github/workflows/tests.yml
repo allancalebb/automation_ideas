@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:   # allows manual trigger from GitHub UI
+    inputs:
+      zoho_env:
+        description: 'Target environment: live (people.zoho.com) or test (peoplelabs.zoho.com)'
+        required: false
+        default: 'live'
+        type: choice
+        options:
+          - live
+          - test
 
 jobs:
   test:
@@ -31,6 +40,8 @@ jobs:
           ZOHO_USER: ${{ secrets.ZOHO_USER }}
           ZOHO_PASS: ${{ secrets.ZOHO_PASS }}
           PLAYWRIGHT_HEADLESS: "true"
+          # Use workflow_dispatch input when triggered manually; default to 'live' on push/PR
+          ZOHO_ENV: ${{ github.event.inputs.zoho_env || 'live' }}
         run: |
           mvn test \
             -D allure.results.directory=target/allure-results \

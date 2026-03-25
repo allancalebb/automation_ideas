@@ -1,6 +1,7 @@
 package com.zohopeopleqa.tests;
 
 import com.zohopeopleqa.base.BaseTest;
+import com.zohopeopleqa.config.Config;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
@@ -22,10 +23,10 @@ public class AuthTest extends BaseTest {
     public void verifyLoginAndDashboard() {
         String url = page.url();
         System.out.println("Verifying dashboard URL: " + url);
-        boolean isOnDashboard = url.startsWith("https://people.zoho.com/") &&
+        boolean isOnDashboard = url.startsWith(Config.BASE_URL + "/") &&
                                 (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard"));
 
-        String locatorUsed = "page.url() startsWith 'https://people.zoho.com/' && contains('/zp'|'/home'|'/dashboard')";
+        String locatorUsed = "page.url() startsWith '" + Config.BASE_URL + "/' && contains('/zp'|'/home'|'/dashboard')";
         System.out.println("[Locator] " + locatorUsed);
         Allure.parameter("Locator / Condition", locatorUsed);
         Allure.parameter("Final URL", url);
@@ -45,12 +46,12 @@ public class AuthTest extends BaseTest {
         System.out.println("Testing logout in a disposable session (main session preserved)...");
 
         String urlBeforeLogout = page.url();
-        String preLogoutCondition = "page.url() startsWith 'https://people.zoho.com/' && contains('/zp')";
+        String preLogoutCondition = "page.url() startsWith '" + Config.BASE_URL + "/' && contains('/zp')";
         System.out.println("[Locator] " + preLogoutCondition);
         Allure.parameter("Locator / Condition (pre-logout)", preLogoutCondition);
         Allure.parameter("URL before logout", urlBeforeLogout);
         Assert.assertTrue(
-                urlBeforeLogout.startsWith("https://people.zoho.com/") && urlBeforeLogout.contains("/zp"),
+                urlBeforeLogout.startsWith(Config.BASE_URL + "/") && urlBeforeLogout.contains("/zp"),
                 "Not on dashboard before logout. URL: " + urlBeforeLogout
         );
 
@@ -60,9 +61,9 @@ public class AuthTest extends BaseTest {
         );
         Page disposablePage = disposableContext.newPage();
         try {
-            disposablePage.navigate("https://people.zoho.com");
+            disposablePage.navigate(Config.BASE_URL);
             disposablePage.waitForURL(
-                    url -> url.startsWith("https://people.zoho.com/") && url.contains("/zp"),
+                    url -> url.startsWith(Config.BASE_URL + "/") && url.contains("/zp"),
                     new Page.WaitForURLOptions().setTimeout(10000)
             );
             System.out.println("Disposable session active at: " + disposablePage.url());

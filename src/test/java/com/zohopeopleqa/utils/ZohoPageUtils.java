@@ -2,6 +2,7 @@ package com.zohopeopleqa.utils;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
+import com.zohopeopleqa.config.Config;
 
 /**
  * Utility class for common Zoho People page interactions used across multiple test classes.
@@ -13,7 +14,7 @@ import com.microsoft.playwright.options.LoadState;
  */
 public class ZohoPageUtils {
 
-    private static final String BASE_URL = "https://people.zoho.com";
+    // BASE_URL is now environment-driven via Config (ZOHO_ENV=live|test in .env)
 
     // ─── Navigation ──────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ public class ZohoPageUtils {
      */
     public static void waitForDashboard(Page page) {
         page.waitForURL(
-                url -> url.startsWith(BASE_URL + "/") &&
+                url -> url.startsWith(Config.BASE_URL + "/") &&
                        (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
                 new Page.WaitForURLOptions().setTimeout(15000)
         );
@@ -33,7 +34,7 @@ public class ZohoPageUtils {
      * Navigates to the Zoho People home dashboard URL directly.
      */
     public static void goToDashboard(Page page) {
-        page.navigate(BASE_URL);
+        page.navigate(Config.BASE_URL);
         waitForDashboard(page);
     }
 

@@ -1,6 +1,7 @@
 package com.zohopeopleqa.tests;
 
 import com.zohopeopleqa.base.BaseTest;
+import com.zohopeopleqa.config.Config;
 import com.zohopeopleqa.pages.NavBar;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
@@ -57,7 +58,7 @@ public class NegativeTests extends BaseTest {
         // For an admin with many system reports, Zoho People may show all reports regardless of search text;
         // the meaningful check is that the search functionality is stable and doesn't break/redirect to login.
         String currentUrl = page.url();
-        boolean stillOnReports = currentUrl.contains("people.zoho.com") && !currentUrl.contains("login");
+        boolean stillOnReports = currentUrl.contains(Config.BASE_DOMAIN) && !currentUrl.contains("login");
         String currentSearchVal = page.locator("#searchreports").inputValue();
 
         System.out.println("Still on Reports page: " + stillOnReports);
@@ -115,7 +116,7 @@ public class NegativeTests extends BaseTest {
         // Home
         goHome();
         String homeUrl = page.url();
-        Assert.assertTrue(homeUrl.contains("people.zoho.com") && !homeUrl.contains("login"),
+        Assert.assertTrue(homeUrl.contains(Config.BASE_DOMAIN) && !homeUrl.contains("login"),
                 "Home URL should be on Zoho People domain. Got: '" + homeUrl + "'");
         System.out.println("✅ Home: session valid — " + homeUrl);
 
@@ -124,7 +125,7 @@ public class NegativeTests extends BaseTest {
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
         page.waitForSelector("#tltabcontainer", new Page.WaitForSelectorOptions().setTimeout(15000));
         String leaveUrl = page.url();
-        Assert.assertTrue(leaveUrl.contains("people.zoho.com") && !leaveUrl.contains("login"),
+        Assert.assertTrue(leaveUrl.contains(Config.BASE_DOMAIN) && !leaveUrl.contains("login"),
                 "Leave page should not redirect to login. Got: '" + leaveUrl + "'");
         System.out.println("✅ Leave: session valid — " + leaveUrl);
 
@@ -133,7 +134,7 @@ public class NegativeTests extends BaseTest {
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
         page.waitForSelector("#searchreports", new Page.WaitForSelectorOptions().setTimeout(25000));
         String reportsUrl = page.url();
-        Assert.assertTrue(reportsUrl.contains("people.zoho.com") && !reportsUrl.contains("login"),
+        Assert.assertTrue(reportsUrl.contains(Config.BASE_DOMAIN) && !reportsUrl.contains("login"),
                 "Reports page should not redirect to login. Got: '" + reportsUrl + "'");
         System.out.println("✅ Reports: session valid — " + reportsUrl);
 
@@ -141,7 +142,7 @@ public class NegativeTests extends BaseTest {
         page.click(NavBar.SETTINGS_TAB);
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
         String settingsUrl = page.url();
-        Assert.assertTrue(settingsUrl.contains("people.zoho.com") && !settingsUrl.contains("login"),
+        Assert.assertTrue(settingsUrl.contains(Config.BASE_DOMAIN) && !settingsUrl.contains("login"),
                 "Settings page should not redirect to login. Got: '" + settingsUrl + "'");
         System.out.println("✅ Settings: session valid — " + settingsUrl);
 
@@ -165,9 +166,9 @@ public class NegativeTests extends BaseTest {
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
 
         // Full-page navigate back to Home so the SPA re-renders the profile card
-        page.navigate("https://people.zoho.com");
+        page.navigate(Config.BASE_URL);
         page.waitForURL(
-                url -> url.startsWith("https://people.zoho.com/") && (url.contains("/zp") || url.contains("/home")),
+                url -> url.startsWith(Config.BASE_URL + "/") && (url.contains("/zp") || url.contains("/home")),
                 new Page.WaitForURLOptions().setTimeout(20000)
         );
 
@@ -209,7 +210,7 @@ public class NegativeTests extends BaseTest {
                 page.locator(tabId).first().click();
                 page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(10000));
                 String url = page.url();
-                boolean onZohoPeople = url.contains("people.zoho.com") && !url.contains("login");
+                boolean onZohoPeople = url.contains(Config.BASE_DOMAIN) && !url.contains("login");
                 Allure.parameter(tab + " URL", url);
                 Assert.assertTrue(onZohoPeople,
                         "After clicking '" + tab + "' tab, should remain on Zoho People (not login). Got: '" + url + "'");

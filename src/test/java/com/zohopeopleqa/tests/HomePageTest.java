@@ -1,6 +1,7 @@
 package com.zohopeopleqa.tests;
 
 import com.zohopeopleqa.base.BaseTest;
+import com.zohopeopleqa.config.Config;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
 
@@ -195,9 +196,9 @@ public class HomePageTest extends BaseTest {
         System.out.println("Verifying My Space sub-tab is visible...");
 
         // Full-navigate to Home so the SPA fully re-renders the sub-tab bar under parallel load
-        page.navigate("https://people.zoho.com");
+        page.navigate(Config.BASE_URL);
         page.waitForURL(
-                url -> url.startsWith("https://people.zoho.com/") && (url.contains("/zp") || url.contains("/home")),
+                url -> url.startsWith(Config.BASE_URL + "/") && (url.contains("/zp") || url.contains("/home")),
                 new Page.WaitForURLOptions().setTimeout(20000)
         );
 
