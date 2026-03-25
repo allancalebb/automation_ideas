@@ -194,9 +194,12 @@ public class HomePageTest extends BaseTest {
     public void verifyMySpaceSubTab() {
         System.out.println("Verifying My Space sub-tab is visible...");
 
-        // Navigate to the Home main tab; this may land on an Activities sub-view (SPA state)
-        page.locator("#zp_maintab_home").first().click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        // Full-navigate to Home so the SPA fully re-renders the sub-tab bar under parallel load
+        page.navigate("https://people.zoho.com");
+        page.waitForURL(
+                url -> url.startsWith("https://people.zoho.com/") && (url.contains("/zp") || url.contains("/home")),
+                new Page.WaitForURLOptions().setTimeout(20000)
+        );
 
         // #zp_t_home_myspace may be CSS-hidden when the Activities sub-tab is active.
         // Use JavaScript to read its text and trigger a click regardless of visual state.
