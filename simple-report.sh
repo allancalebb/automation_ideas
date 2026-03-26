@@ -58,14 +58,18 @@ get_latest_log() {
 }
 
 RESULT_FILES=$(find "$LATEST_RUN" -name '*-result.json' | python3 -c "
-import sys, json
+import sys, json, re
 files = [f.strip() for f in sys.stdin if f.strip()]
-def get_start(f):
+def get_sort_key(f):
     try:
-        return json.load(open(f)).get('start', 0)
+        name = json.load(open(f)).get('name', '')
+        m = re.search(r'ZP-(\d+)', name)
+        if m:
+            return (0, int(m.group(1)))
+        return (1, name)  # non-ZP tests go after
     except:
-        return 0
-for f in sorted(files, key=get_start):
+        return (2, 0)
+for f in sorted(files, key=get_sort_key):
     print(f)
 ")
 LOG_FILE=$(get_latest_log)
