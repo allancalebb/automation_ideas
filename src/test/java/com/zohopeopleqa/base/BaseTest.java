@@ -88,35 +88,7 @@ public class BaseTest {
         );
         System.out.println("[" + getClass().getSimpleName() + "] Browser launched (headless=" + headless + ")");
 
-        java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
-        java.nio.file.Path metaPath    = Paths.get(SESSION_META_FILE);
-        String currentUser = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER");
-        boolean sessionUserMatches = false;
-        if (Files.exists(metaPath)) {
-            try {
-                String meta = new String(Files.readAllBytes(metaPath));
-                sessionUserMatches = meta.contains("\"" + currentUser + "\"");
-            } catch (Exception ignored) {}
-        }
-        if (Files.exists(sessionPath) && sessionUserMatches) {
-            System.out.println("[Session] Found saved session for " + currentUser + " — restoring cookies...");
-            context = browser.newContext(
-                    new Browser.NewContextOptions().setStorageStatePath(sessionPath)
-            );
-        } else {
-            if (Files.exists(sessionPath) && !sessionUserMatches) {
-                System.out.println("[Session] ZOHO_USER changed — discarding old session and forcing fresh login.");
-                try { Files.deleteIfExists(sessionPath); Files.deleteIfExists(metaPath); } catch (Exception ignored) {}
-            } else {
-                System.out.println("[Session] No saved session found — will perform full login.");
-            }
-            context = browser.newContext();
-        }
-        page = context.newPage();
-        page.setDefaultTimeout(15000);
-        page.setDefaultNavigationTimeout(15000);
-
-        // Stamp every test in this class with run-context visible in Allure
+        // Stamp Allure run-context labels (before session setup)
         String zohoUser = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER", "unknown");
         Allure.label("environment", Config.ENV.toUpperCase());
         Allure.label("host", Config.BASE_DOMAIN);
@@ -140,30 +112,56 @@ public class BaseTest {
                 originalOut.flush(); buf.flush();
             }
         }, true));
-        System.out.println("[Setup] Checking session state...");
-        if (Files.exists(Paths.get(SESSION_STATE_FILE))) {
-            try {
-                page.navigate(Config.BASE_URL);
-                page.waitForURL(
-                        url -> url.startsWith(Config.BASE_URL + "/") &&
-                               (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
-                        new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(10000)
-                );
-                System.out.println("[Setup] Session still valid — skipping full login. URL: " + page.url());
-                return;
-            } catch (Exception e) {
-                System.out.println("[Setup] Saved session expired or invalid — performing full login.");
-                try {
-                    Files.deleteIfExists(Paths.get(SESSION_STATE_FILE));
-                    Files.deleteIfExists(Paths.get(SESSION_META_FILE));
-                } catch (Exception ignored) {}
-            }
-        }
-        String email = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER");
+
+        String email    = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER");
         String password = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_PASS");
-        System.out.println("[Setup] Logging in as: " + email);
-        loginToZohoPeople(email, password);
-        System.out.println("[Setup] Login complete — shared session ready.");
+
+        // ── Serialized session bootstrap ──────────────────────────────────────
+        // Context creation happens INSIDE the lock so every thread either:
+        //   (a) loads the already-saved session file (fast path, no login), or
+        //   (b) does the ONE real login and saves the session for all others.
+        // Without this, every thread creates a cookieless context and tries to
+        // login simultaneously — Zoho blocks concurrent logins and exhausts the
+        // daily sign-in limit within a few failed runs.
+        synchronized (SESSION_LOCK) {
+            java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
+
+            if (Files.exists(sessionPath)) {
+                // Re-use saved session cookies
+                System.out.println("[" + getClass().getSimpleName() + "] Loading saved session...");
+                context = browser.newContext(
+                        new Browser.NewContextOptions().setStorageStatePath(sessionPath));
+                page = context.newPage();
+                page.setDefaultTimeout(15000);
+                page.setDefaultNavigationTimeout(15000);
+                try {
+                    page.navigate(Config.BASE_URL);
+                    page.waitForURL(
+                            url -> url.startsWith(Config.BASE_URL + "/") &&
+                                   (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
+                            new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(20000)
+                    );
+                    System.out.println("[" + getClass().getSimpleName() + "] Session valid — " + page.url());
+                    return;
+                } catch (Exception e) {
+                    System.out.println("[" + getClass().getSimpleName() + "] Session expired — logging in fresh.");
+                    try { context.close(); } catch (Exception ignored) {}
+                    try {
+                        Files.deleteIfExists(sessionPath);
+                        Files.deleteIfExists(Paths.get(SESSION_META_FILE));
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            // No valid session — perform the one real login for this run.
+            System.out.println("[" + getClass().getSimpleName() + "] No session — logging in as: " + email);
+            context = browser.newContext();
+            page = context.newPage();
+            page.setDefaultTimeout(15000);
+            page.setDefaultNavigationTimeout(15000);
+            loginToZohoPeople(email, password);
+            System.out.println("[" + getClass().getSimpleName() + "] Login complete — session saved.");
+        }
     }
 
     @BeforeMethod
