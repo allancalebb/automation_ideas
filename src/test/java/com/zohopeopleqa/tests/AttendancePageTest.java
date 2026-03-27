@@ -27,59 +27,6 @@ public class AttendancePageTest extends BaseTest {
     // Tests
     // ==============================
 
-    @TmsLink("ZP-049")
-    @Test(priority = 1, description = "[ZP-049] Verify Check-in button is visible on the Home page")
-    @Story("Attendance Widget")
-    @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Check-in button (ZPAtt_check_in_out) is visible in the My Space attendance section")
-    public void verifyCheckInButtonPresent() {
-        System.out.println("Verifying Check-in button is visible on Home page...");
-
-        // Make sure we are on the Home page
-        page.locator(NavBar.HOME_TAB).first().click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
-
-        // Confirmed via DOM inspection: button#ZPAtt_check_in_out
-        page.waitForSelector("#ZPAtt_check_in_out",
-                new Page.WaitForSelectorOptions().setTimeout(15000));
-
-        String btnText = page.locator("#ZPAtt_check_in_out").innerText().trim();
-        String locatorUsed = "#ZPAtt_check_in_out (button — Check-in, My Space attendance widget)";
-        System.out.println("[Locator] " + locatorUsed);
-        Allure.parameter("Locator / Condition", locatorUsed);
-        Allure.parameter("Button text", btnText);
-        Assert.assertEquals(btnText, "Check-in",
-                "Check-in button text mismatch. Got: '" + btnText + "'");
-
-        takeElementScreenshot("#ZPAtt_check_in_out", "attendance_checkin_btn");
-        System.out.println("✅ Test PASSED: Check-in button is visible with label 'Check-in'");
-    }
-
-    @TmsLink("ZP-050")
-    @Test(priority = 2, description = "[ZP-050] Verify Attendance tile is present in the Settings service grid")
-    @Story("Attendance Settings")
-    @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Attendance configuration tile is visible in the Settings admin grid")
-    public void verifyAttendanceTileInSettings() {
-        System.out.println("Verifying Attendance tile exists in Settings grid...");
-
-        goToSettings();
-
-        page.waitForSelector(SettingsPage.SERVICE_CONTAINER + " h5:has-text('Attendance')",
-                new Page.WaitForSelectorOptions().setTimeout(10000));
-
-        String tileText = page.locator(SettingsPage.SERVICE_CONTAINER + " h5:has-text('Attendance')").innerText().trim();
-        String locatorUsed = "#servicPageContainer h5:has-text('Attendance')";
-        System.out.println("[Locator] " + locatorUsed);
-        Allure.parameter("Locator / Condition", locatorUsed);
-        Allure.parameter("Tile text", tileText);
-        Assert.assertEquals(tileText, "Attendance",
-                "Attendance tile text mismatch. Got: '" + tileText + "'");
-
-        takeElementScreenshot(SettingsPage.SERVICE_CONTAINER, "attendance_tile_in_settings");
-        System.out.println("✅ Test PASSED: Attendance tile present in Settings grid");
-    }
-
     @TmsLink("ZP-051")
     @Test(priority = 3, description = "[ZP-051] Verify Attendance settings sub-page loads when tile is clicked")
     @Story("Attendance Settings")

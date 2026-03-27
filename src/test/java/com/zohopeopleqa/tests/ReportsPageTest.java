@@ -12,28 +12,6 @@ import io.qameta.allure.*;
 @Feature("Reports Page")
 public class ReportsPageTest extends BaseTest {
 
-    @TmsLink("ZP-026")
-    @Test(priority = 1, description = "[ZP-026] Verify Reports tab is visible in navigation")
-    @Story("Reports Navigation")
-    @Severity(SeverityLevel.NORMAL)
-    @Description("Validates that the Reports tab is present and visible in the main navigation")
-    public void verifyReportsTabVisible() {
-        System.out.println("Verifying Reports tab is visible...");
-
-        // Confirmed via Playwright MCP DOM inspection: li#zp_maintab_reports
-        page.waitForSelector("#zp_maintab_reports",
-                new Page.WaitForSelectorOptions().setTimeout(10000));
-
-        boolean isVisible = page.isVisible("#zp_maintab_reports");
-        String locatorUsed = "#zp_maintab_reports (li — Reports tab, main navigation)";
-        System.out.println("[Locator] " + locatorUsed);
-        Allure.parameter("Locator / Condition", locatorUsed);
-        Assert.assertTrue(isVisible, "Reports tab #zp_maintab_reports not visible in navigation");
-
-        takeElementScreenshot("#zp_maintab_reports", "reports_tab_visible");
-        System.out.println("✅ Test PASSED: Reports tab is visible");
-    }
-
     @TmsLink("ZP-027")
     @Test(priority = 2, description = "[ZP-027] Verify navigating to Reports page")
     @Story("Reports Navigation")

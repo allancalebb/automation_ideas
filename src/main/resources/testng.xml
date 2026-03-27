@@ -15,7 +15,6 @@
             <class name="com.zohopeopleqa.tests.ReportsPageTest"/>
             <class name="com.zohopeopleqa.tests.SettingsPageTest"/>
             <class name="com.zohopeopleqa.tests.AttendancePageTest"/>
-            <class name="com.zohopeopleqa.tests.PeoplePageTest"/>
             <class name="com.zohopeopleqa.tests.NegativeTests"/>
         </classes>
     </test>

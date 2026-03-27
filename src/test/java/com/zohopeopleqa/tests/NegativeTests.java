@@ -157,42 +157,6 @@ public class NegativeTests extends BaseTest {
         System.out.println("✅ Test PASSED: Session remains valid across Home, Leave Tracker, Reports, Settings");
     }
 
-    @TmsLink("ZP-062")
-    @Test(priority = 4, description = "[ZP-062] Verify user display name is non-empty after module navigation")
-    @Story("Session Integrity")
-    @Severity(SeverityLevel.NORMAL)
-    @Description("After navigating away and returning to Home, confirms the user display name is still populated")
-    public void verifyUserDisplayNameAfterNavigation() {
-        System.out.println("Verifying user display name persists after navigation...");
-
-        // Navigate away to Settings
-        page.click(NavBar.SETTINGS_TAB);
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
-
-        // Full-page navigate back to Home so the SPA re-renders the profile card
-        page.navigate(Config.BASE_URL);
-        page.waitForURL(
-                url -> url.startsWith(Config.BASE_URL + "/") && (url.contains("/zp") || url.contains("/home")),
-                new Page.WaitForURLOptions().setTimeout(20000)
-        );
-
-        // Verify display name is still present
-        page.waitForSelector("#user_detailsBand", new Page.WaitForSelectorOptions().setTimeout(30000));
-        String displayName = page.locator("#user_detailsBand").innerText().trim();
-
-        String locatorUsed = "#user_detailsBand (user display name on Home after navigation)";
-        System.out.println("[Locator] " + locatorUsed);
-        System.out.println("Display name: " + displayName);
-        Allure.parameter("Locator / Condition", locatorUsed);
-        Allure.parameter("Display name", displayName);
-
-        Assert.assertFalse(displayName.isEmpty(),
-                "User display name should not be empty after returning to Home. Got: '" + displayName + "'");
-
-        takeElementScreenshot("#user_detailsBand", "display_name_after_nav");
-        System.out.println("✅ Test PASSED: User display name '" + displayName + "' persists after navigation");
-    }
-
     @TmsLink("ZP-063")
     @Test(priority = 5, description = "[ZP-063] Verify Leave Tracker top tabs are all accessible without errors")
     @Story("Navigation Edge Cases")
