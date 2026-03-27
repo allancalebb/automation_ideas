@@ -223,7 +223,26 @@ except Exception as e:
     screenshot=""
 
     # Read per-test log file written by BaseTest
-    test_log_file="target/logs/${test_name}.log"
+    # Log files are named: target/logs/<SimpleClassName>_<methodName>.log
+    test_log_class=$(python3 -c "
+import json
+try:
+    d = json.load(open('$file'))
+    cls = next((l['value'] for l in d.get('labels', []) if l['name'] == 'testClass'), '')
+    print(cls.split('.')[-1])
+except:
+    print('')
+" 2>/dev/null)
+    test_log_method=$(python3 -c "
+import json
+try:
+    d = json.load(open('$file'))
+    print(next((l['value'] for l in d.get('labels', []) if l['name'] == 'testMethod'), ''))
+except:
+    print('')
+" 2>/dev/null)
+    test_log_file="target/logs/${test_log_class}_${test_log_method}.log"
+    logs=""
     if [ -f "$test_log_file" ]; then
         logs=$(cat "$test_log_file" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
     fi

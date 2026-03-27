@@ -1,0 +1,13 @@
+<configuration>
+    <!-- Suppress noisy SLF4J output from Playwright, Allure, and other framework libs.
+         logback-classic is on the classpath to prevent the "No SLF4J providers found" warning. -->
+    <root level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+</configuration>

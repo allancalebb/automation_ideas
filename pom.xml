@@ -32,6 +32,14 @@
             <artifactId>allure-testng</artifactId>
             <version>2.25.0</version>
         </dependency>
+        <!-- Logback Classic — provides an SLF4J implementation so Playwright/Allure
+             transitive SLF4J dependencies don't print "No SLF4J providers found" noise. -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.14</version>
+            <scope>test</scope>
+        </dependency>
     
       <dependency>
         <groupId>commons-io</groupId>

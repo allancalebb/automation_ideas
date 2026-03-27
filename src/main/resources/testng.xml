@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="ZohoPeople Smart Tests" parallel="classes" thread-count="4" preserve-order="true">
+    <listeners>
+        <!-- AllureAttachmentListener MUST be declared before AllureTestNg so that its
+             onTestSuccess/onTestFailure fires while the Allure lifecycle is still open,
+             allowing attachments (console log, failure screenshot) to reach the report. -->
+        <listener class-name="com.zohopeopleqa.listeners.AllureAttachmentListener"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
     <test name="Smart Tests" preserve-order="true">
         <classes>
             <class name="com.zohopeopleqa.tests.HomePageTest"/>

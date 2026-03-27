@@ -263,11 +263,11 @@ public class HomePageTest extends BaseTest {
         System.out.println("Greeting card text: " + cardText);
         Allure.parameter("Locator / Condition", locatorUsed);
         Allure.parameter("Greeting card text", cardText);
-        Assert.assertTrue(cardText.contains("Allan the Administrator"),
-                "Greeting card does not contain 'Allan the Administrator'. Got: '" + cardText + "'");
+        Assert.assertTrue(cardText.contains("Admin 2 F Admin 2 L"),
+                "Greeting card does not contain 'Admin 2 F Admin 2 L'. Got: '" + cardText + "'");
 
         takeElementScreenshot("#actionListWelcomeCard", "greeting_card_user_name");
-        System.out.println("✅ Test PASSED: Greeting card contains 'Allan the Administrator'");
+        System.out.println("✅ Test PASSED: Greeting card contains the user name");
     }
 
     @TmsLink("ZP-011")

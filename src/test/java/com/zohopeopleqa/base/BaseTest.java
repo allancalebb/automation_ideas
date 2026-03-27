@@ -29,10 +29,45 @@ public class BaseTest {
     // Lock for synchronized session-state file I/O only (avoids concurrent write corruption)
     private static final Object SESSION_LOCK = new Object();
 
-    private PrintStream originalOut;
     private FileOutputStream testLogStream;
+    private String currentLogPath;
     private static final String LOGS_DIR = "target/logs";
-    private ByteArrayOutputStream preTestBuffer;
+
+    // Thread-safe per-test log capture — routes System.out to the calling thread's log file.
+    // Installed ONCE in @BeforeSuite; each @BeforeMethod registers / @AfterMethod deregisters.
+    // Public so AllureAttachmentListener can flush the stream before reading the log file.
+    public static final java.util.concurrent.ConcurrentHashMap<Long, FileOutputStream> THREAD_LOG_STREAMS =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    private static volatile PrintStream REAL_OUT = null;
+
+    // Thread-locals exposed to AllureAttachmentListener which reads them in onTestSuccess/onTestFailure
+    public static final ThreadLocal<String> CURRENT_LOG_PATH = new ThreadLocal<>();
+    public static final ThreadLocal<Page> CURRENT_PAGE = new ThreadLocal<>();
+
+    private static synchronized void installThreadAwarePrintStream() {
+        if (REAL_OUT != null) return; // already installed by another thread
+        REAL_OUT = System.out;
+        System.setOut(new PrintStream(new java.io.OutputStream() {
+            private FileOutputStream currentLog() {
+                return THREAD_LOG_STREAMS.get(Thread.currentThread().getId());
+            }
+            public void write(int b) throws java.io.IOException {
+                REAL_OUT.write(b);
+                FileOutputStream log = currentLog();
+                if (log != null) try { log.write(b); } catch (java.io.IOException ignored) {}
+            }
+            public void write(byte[] b, int off, int len) throws java.io.IOException {
+                REAL_OUT.write(b, off, len);
+                FileOutputStream log = currentLog();
+                if (log != null) try { log.write(b, off, len); } catch (java.io.IOException ignored) {}
+            }
+            public void flush() throws java.io.IOException {
+                REAL_OUT.flush();
+                FileOutputStream log = currentLog();
+                if (log != null) try { log.flush(); } catch (java.io.IOException ignored) {}
+            }
+        }, true));
+    }
 
     protected static final String SESSION_STATE_FILE = "session-state.json";
     protected static final String SESSION_META_FILE  = "session-meta.json";
@@ -40,55 +75,212 @@ public class BaseTest {
     private static final String RUN_STARTED_AT =
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
+    /**
+     * Runs ONCE before any parallel test classes start.
+     * 1. Writes Allure environment.properties
+     * 2. Ensures ONE valid session-state.json exists (login if needed)
+     *
+     * By doing all login work here (single-threaded), we guarantee that every
+     * parallel @BeforeClass only needs to READ the saved session file — no login,
+     * no race conditions, no concurrent browser creation during login.
+     */
     @BeforeSuite(alwaysRun = true)
-    public static void writeAllureEnvironment() {
+    public void suiteSetup() {
+        // Install the thread-aware PrintStream ONCE — must happen before any parallel class starts
+        installThreadAwarePrintStream();
+
+        // --- 1. Write Allure environment.properties ---
         try {
-            String allureDir = System.getProperty("allure.results.directory",
-                    "target/allure-results");
+            String allureDir = System.getProperty("allure.results.directory", "target/allure-results");
             Files.createDirectories(Paths.get(allureDir));
-            String user     = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER", "unknown");
-            boolean headless = Boolean.parseBoolean(
-                    System.getenv().getOrDefault("PLAYWRIGHT_HEADLESS", "false"));
+            String user = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER", "unknown");
+            boolean headless = Boolean.parseBoolean(System.getenv().getOrDefault("PLAYWRIGHT_HEADLESS", "false"));
             String props = String.join("\n",
-                    "Environment="   + Config.ENV.toUpperCase(),
-                    "Target.URL="    + Config.BASE_URL,
-                    "User="          + user,
+                    "Environment="  + Config.ENV.toUpperCase(),
+                    "Target.URL="   + Config.BASE_URL,
+                    "User="         + user,
                     "Browser=Chromium (Playwright)",
-                    "Headless="      + headless,
-                    "Run.Started="   + RUN_STARTED_AT,
-                    "Java.Version="  + System.getProperty("java.version"),
-                    "OS="            + System.getProperty("os.name") + " " + System.getProperty("os.version")
+                    "Headless="     + headless,
+                    "Run.Started="  + RUN_STARTED_AT,
+                    "Java.Version=" + System.getProperty("java.version"),
+                    "OS="           + System.getProperty("os.name") + " " + System.getProperty("os.version")
             );
             Files.write(Paths.get(allureDir, "environment.properties"), props.getBytes());
-            System.out.println("[Allure] environment.properties written \u2192 "
-                    + Config.ENV.toUpperCase() + " / " + Config.BASE_URL);
+            System.out.println("[Allure] environment.properties written → " + Config.ENV.toUpperCase() + " / " + Config.BASE_URL);
         } catch (Exception e) {
-            System.out.println("[Allure] Warning: could not write environment.properties: "
-                    + e.getMessage());
+            System.out.println("[Allure] Warning: could not write environment.properties: " + e.getMessage());
+        }
+
+        // --- 2. Ensure a valid session exists ---
+        String email    = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER");
+        String password = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_PASS");
+        java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
+        java.nio.file.Path metaPath    = Paths.get(SESSION_META_FILE);
+
+        // Discard session if ZOHO_USER has changed
+        if (Files.exists(sessionPath) && Files.exists(metaPath)) {
+            try {
+                String meta = new String(Files.readAllBytes(metaPath));
+                if (!meta.contains("\"" + email + "\"")) {
+                    Files.deleteIfExists(sessionPath);
+                    Files.deleteIfExists(metaPath);
+                    System.out.println("[Suite] ZOHO_USER changed — discarding stale session.");
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Validate existing session (headless, fast)
+        if (Files.exists(sessionPath)) {
+            if (suiteValidateSession(sessionPath)) {
+                System.out.println("[Suite] Existing session is valid — skipping login.");
+                return;
+            }
+            // Session expired
+            try { Files.deleteIfExists(sessionPath); Files.deleteIfExists(metaPath); } catch (Exception ignored) {}
+        }
+
+        // No valid session — perform exactly ONE login now (before parallel classes start)
+        System.out.println("[Suite] No valid session — logging in as: " + email);
+        suiteDoLogin(email, password, sessionPath, metaPath);
+        System.out.println("[Suite] Login complete — session saved.");
+    }
+
+    /** Validates the saved session by loading it in a headless browser and checking the landed URL. */
+    private boolean suiteValidateSession(java.nio.file.Path sessionPath) {
+        Playwright pw = Playwright.create();
+        try {
+            Browser b  = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+            BrowserContext ctx = b.newContext(new Browser.NewContextOptions().setStorageStatePath(sessionPath));
+            Page p = ctx.newPage();
+            p.setDefaultTimeout(20000);
+            p.setDefaultNavigationTimeout(20000);
+            p.navigate(Config.BASE_URL);
+            p.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
+                    new Page.WaitForLoadStateOptions().setTimeout(20000));
+            p.waitForTimeout(3000);
+            String url = p.url();
+            ctx.close(); b.close();
+            boolean valid = !url.contains("accounts.zoho.com") && !url.contains("/signin");
+            System.out.println("[Suite] Session validation → " + (valid ? "VALID" : "EXPIRED") + " at " + url);
+            return valid;
+        } catch (Exception e) {
+            System.out.println("[Suite] Session validation error: " + e.getMessage());
+            return false;
+        } finally {
+            pw.close();
         }
     }
 
-    // @BeforeSuite above writes Allure environment.properties; browser is launched per-class in loginOnce()
+    /**
+     * Performs a single login in a VISIBLE (non-headless) browser, saves cookies, then closes.
+     * Always non-headless so the user can see the browser and resolve any Zoho challenges
+     * (signin-block, CAPTCHA, MFA, daily limit notices) that require manual intervention.
+     */
+    private void suiteDoLogin(String email, String password,
+                              java.nio.file.Path sessionPath, java.nio.file.Path metaPath) {
+        Playwright pw = Playwright.create();
+        try {
+            // Always launch VISIBLE — user must be able to see and interact with Zoho challenges
+            Browser b   = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
+            BrowserContext ctx = b.newContext();
+            Page p = ctx.newPage();
+            p.setDefaultTimeout(30000);
+            p.setDefaultNavigationTimeout(30000);
+
+            // Step 1: Navigate and click Sign In
+            System.out.println("[Suite] Navigating to " + Config.BASE_URL);
+            p.navigate(Config.BASE_URL);
+            try {
+                p.click("a:has-text('Sign In'), button:has-text('Sign In')",
+                        new Page.ClickOptions().setTimeout(10000));
+                p.waitForURL(url -> url.contains("accounts.zoho.com") || url.contains("signin"),
+                        new Page.WaitForURLOptions().setTimeout(10000));
+            } catch (Exception e) {
+                // May already be on the login page (e.g. redirect happened automatically)
+                System.out.println("[Suite] Sign In click skipped — already on auth page: " + p.url());
+            }
+
+            // Step 2: Email
+            p.waitForSelector("input[type='email'], input[id='login_id'], input[name='login_id']",
+                    new Page.WaitForSelectorOptions().setTimeout(15000));
+            if (p.isVisible("input[type='email']")) p.fill("input[type='email']", email);
+            else if (p.isVisible("input[id='login_id']"))  p.fill("input[id='login_id']", email);
+            else p.locator("input[type='email'], input[name='username'], input[id='login_id']").first().fill(email);
+            p.click("button:has-text('Next'), #nextbtn, button[type='submit']");
+
+            // Step 3: Password
+            p.waitForSelector("input[type='password'], input[name='password']",
+                    new Page.WaitForSelectorOptions().setTimeout(15000));
+            p.waitForTimeout(500);
+            if (p.isVisible("input[type='password']")) p.fill("input[type='password']", password);
+            else p.fill("input[id='password']", password);
+            p.click("button:has-text('Sign in'), button:has-text('Sign In'), #signin_submit, #nextbtn, button[type='submit']");
+
+            // Step 4: Dismiss optional popups
+            p.waitForTimeout(2000);
+            for (String btn : new String[]{"Skip", "Remind Later", "Not Now"}) {
+                try { if (p.isVisible("button:has-text('" + btn + "')")) p.click("button:has-text('" + btn + "')"); }
+                catch (Exception ignored) {}
+            }
+
+            // Step 5: Wait for app to load — with fallback for Zoho challenge pages
+            p.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
+                    new Page.WaitForLoadStateOptions().setTimeout(30000));
+            p.waitForTimeout(2000);
+            String finalUrl = p.url();
+            System.out.println("[Suite] Post-login URL: " + finalUrl);
+
+            // Detect Zoho challenge/block pages (signin-block, rate-limit, CAPTCHA, announcement)
+            if (finalUrl.contains("accounts.zoho.com")) {
+                System.out.println();
+                System.out.println("═══════════════════════════════════════════════════════════");
+                System.out.println("⚠️  ZOHO CHALLENGE DETECTED — MANUAL ACTION REQUIRED");
+                System.out.println("═══════════════════════════════════════════════════════════");
+                System.out.println("  A browser window has opened showing a Zoho challenge.");
+                System.out.println("  Please complete the login manually in that window.");
+                System.out.println("  Waiting up to 5 minutes for you to finish...");
+                System.out.println("═══════════════════════════════════════════════════════════");
+                System.out.println();
+
+                // Wait for user to resolve the challenge and land on the Zoho People app
+                p.setDefaultTimeout(300000);
+                p.setDefaultNavigationTimeout(300000);
+                p.waitForURL(url -> !url.contains("accounts.zoho.com"),
+                        new Page.WaitForURLOptions().setTimeout(300000));
+                p.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
+                        new Page.WaitForLoadStateOptions().setTimeout(30000));
+                p.waitForTimeout(3000);
+                finalUrl = p.url();
+                System.out.println("[Suite] Manual login resolved — now at: " + finalUrl);
+            }
+
+            if (finalUrl.contains("accounts.zoho.com") || finalUrl.contains("/signin")) {
+                throw new RuntimeException("Login failed — still on auth page: " + finalUrl);
+            }
+
+            // Save session
+            ctx.storageState(new BrowserContext.StorageStateOptions().setPath(sessionPath));
+            Files.write(metaPath, ("{\"user\":\"" + email + "\"}").getBytes());
+            System.out.println("[Suite] Session saved for: " + email);
+            ctx.close(); b.close();
+        } catch (Exception e) {
+            throw new RuntimeException("[Suite] Login failed: " + e.getMessage(), e);
+        } finally {
+            pw.close();
+        }
+    }
 
     /**
-     * Shared session setup — runs once per test class before any @Test methods.
-     * Reuses saved session if the account matches; falls back to full login otherwise.
-     * All test classes inherit this automatically — no need to override it.
+     * Runs once per test class (each in its own parallel thread).
+     * Session is guaranteed to exist from @BeforeSuite — just load it.
+     * No login logic here; no locks needed (read-only file access).
      */
     @BeforeClass
     public void loginOnce() {
-        // Each test class (thread) creates its own Playwright + Browser + Context + Page.
-        // Playwright Java is NOT thread-safe across threads — each instance must be used
-        // from a single thread. Per-instance stacks are the correct parallel approach.
         boolean headless = Boolean.parseBoolean(
                 System.getenv().getOrDefault("PLAYWRIGHT_HEADLESS", "false"));
-        playwright = Playwright.create();
-        browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions().setHeadless(headless)
-        );
-        System.out.println("[" + getClass().getSimpleName() + "] Browser launched (headless=" + headless + ")");
 
-        // Stamp Allure run-context labels (before session setup)
+        // Stamp Allure run-context labels
         String zohoUser = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER", "unknown");
         Allure.label("environment", Config.ENV.toUpperCase());
         Allure.label("host", Config.BASE_DOMAIN);
@@ -97,105 +289,52 @@ public class BaseTest {
         Allure.parameter("Browser",            "Chromium (Playwright)");
         Allure.parameter("Run Started",        RUN_STARTED_AT);
 
-        // Capture @BeforeClass output so the first test's log file includes login messages
-        preTestBuffer = new ByteArrayOutputStream();
-        originalOut = System.out;
-        final ByteArrayOutputStream buf = preTestBuffer;
-        System.setOut(new PrintStream(new OutputStream() {
-            public void write(int b) throws java.io.IOException {
-                originalOut.write(b); buf.write(b);
-            }
-            public void write(byte[] b, int off, int len) throws java.io.IOException {
-                originalOut.write(b, off, len); buf.write(b, off, len);
-            }
-            public void flush() throws java.io.IOException {
-                originalOut.flush(); buf.flush();
-            }
-        }, true));
+        // Each thread gets its own Playwright + Browser + Context — Playwright is NOT thread-safe
+        // across threads. But all threads simply LOAD the session file; no login occurs here.
+        playwright = Playwright.create();
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(headless));
 
-        String email    = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_USER");
-        String password = com.zohopeopleqa.utils.EnvLoader.get("ZOHO_PASS");
-
-        // ── Serialized session bootstrap ──────────────────────────────────────
-        // Context creation happens INSIDE the lock so every thread either:
-        //   (a) loads the already-saved session file (fast path, no login), or
-        //   (b) does the ONE real login and saves the session for all others.
-        // Without this, every thread creates a cookieless context and tries to
-        // login simultaneously — Zoho blocks concurrent logins and exhausts the
-        // daily sign-in limit within a few failed runs.
-        synchronized (SESSION_LOCK) {
-            java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
-
-            if (Files.exists(sessionPath)) {
-                // Re-use saved session cookies
-                System.out.println("[" + getClass().getSimpleName() + "] Loading saved session...");
-                context = browser.newContext(
-                        new Browser.NewContextOptions().setStorageStatePath(sessionPath));
-                page = context.newPage();
-                page.setDefaultTimeout(15000);
-                page.setDefaultNavigationTimeout(15000);
-                try {
-                    page.navigate(Config.BASE_URL);
-                    page.waitForURL(
-                            url -> url.startsWith(Config.BASE_URL + "/") &&
-                                   (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
-                            new com.microsoft.playwright.Page.WaitForURLOptions().setTimeout(20000)
-                    );
-                    System.out.println("[" + getClass().getSimpleName() + "] Session valid — " + page.url());
-                    return;
-                } catch (Exception e) {
-                    System.out.println("[" + getClass().getSimpleName() + "] Session expired — logging in fresh.");
-                    try { context.close(); } catch (Exception ignored) {}
-                    try {
-                        Files.deleteIfExists(sessionPath);
-                        Files.deleteIfExists(Paths.get(SESSION_META_FILE));
-                    } catch (Exception ignored) {}
-                }
-            }
-
-            // No valid session — perform the one real login for this run.
-            System.out.println("[" + getClass().getSimpleName() + "] No session — logging in as: " + email);
-            context = browser.newContext();
-            page = context.newPage();
-            page.setDefaultTimeout(15000);
-            page.setDefaultNavigationTimeout(15000);
-            loginToZohoPeople(email, password);
-            System.out.println("[" + getClass().getSimpleName() + "] Login complete — session saved.");
+        java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
+        if (!Files.exists(sessionPath)) {
+            throw new RuntimeException("[" + getClass().getSimpleName() + "] session-state.json missing — @BeforeSuite login must have failed.");
         }
+
+        System.out.println("[" + getClass().getSimpleName() + "] Loading saved session (browser headless=" + headless + ")");
+        context = browser.newContext(new Browser.NewContextOptions().setStorageStatePath(sessionPath));
+        page = context.newPage();
+        page.setDefaultTimeout(45000);
+        page.setDefaultNavigationTimeout(45000);
+
+        // Navigate to the app — with valid cookies this goes straight in, no login page
+        page.navigate(Config.BASE_URL);
+        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
+                new Page.WaitForLoadStateOptions().setTimeout(45000));
+        page.waitForTimeout(2000);
+        String url = page.url();
+        if (url.contains("accounts.zoho.com") || url.contains("/signin")) {
+            throw new RuntimeException("[" + getClass().getSimpleName() + "] Session rejected by Zoho — landed at: " + url);
+        }
+        // Reset to normal test timeout after navigation is done
+        page.setDefaultTimeout(15000);
+        page.setDefaultNavigationTimeout(15000);
+        System.out.println("[" + getClass().getSimpleName() + "] Ready at: " + url);
+
+        // Expose the page instance so AllureAttachmentListener can take failure screenshots
+        CURRENT_PAGE.set(page);
     }
 
     @BeforeMethod
     public void startTestLogging(java.lang.reflect.Method method) {
-        // Capture System.out to a per-test log file
+        // Register this thread's log file in the thread-aware PrintStream installed by @BeforeSuite.
+        // System.out.println calls from this thread now write to both the real console AND this file.
         try {
             new File(LOGS_DIR).mkdirs();
-            String logPath = LOGS_DIR + "/" + method.getName() + ".log";
+            String logPath = LOGS_DIR + "/" + getClass().getSimpleName() + "_" + method.getName() + ".log";
+            currentLogPath = logPath;
+            CURRENT_LOG_PATH.set(logPath);
             testLogStream = new FileOutputStream(logPath, false);
-
-            // Flush any pre-test output (e.g. @BeforeClass login) into this test's log
-            // Only the first test gets this — buffer is cleared afterwards
-            if (preTestBuffer != null && preTestBuffer.size() > 0) {
-                testLogStream.write(preTestBuffer.toByteArray());
-                preTestBuffer.reset();
-            }
-
-            // Restore originalOut captured in setupBrowser, then tee to log file
-            final FileOutputStream logOut = testLogStream;
-            final PrintStream consoleOut = originalOut;
-            System.setOut(new PrintStream(new OutputStream() {
-                public void write(int b) throws java.io.IOException {
-                    consoleOut.write(b); logOut.write(b);
-                }
-                public void write(byte[] b, int off, int len) throws java.io.IOException {
-                    consoleOut.write(b, off, len); logOut.write(b, off, len);
-                }
-                public void flush() throws java.io.IOException {
-                    consoleOut.flush(); logOut.flush();
-                }
-            }, true));
-        } catch (Exception e) {
-            System.setOut(originalOut != null ? originalOut : System.out);
-        }
+            THREAD_LOG_STREAMS.put(Thread.currentThread().getId(), testLogStream);
+        } catch (Exception ignored) {}
     }
 
     @AfterMethod
@@ -214,17 +353,21 @@ public class BaseTest {
             System.out.println("⏭️ Test SKIPPED: " + testName + " — no screenshot taken");
         }
 
-        // Restore System.out and close test log file
-        System.out.flush();
-        System.setOut(originalOut != null ? originalOut : System.out);
+        // Deregister this thread's log stream so no further output goes to a closed file,
+        // then flush and close it. The log was already attached to Allure by AllureAttachmentListener
+        // (which fires before @AfterMethod in the TestNG lifecycle).
+        THREAD_LOG_STREAMS.remove(Thread.currentThread().getId());
+        CURRENT_LOG_PATH.remove();
         try {
-            if (testLogStream != null) testLogStream.close();
+            if (testLogStream != null) { testLogStream.flush(); testLogStream.close(); }
         } catch (Exception ignored) {}
         // context stays open — shared across all tests in this class
     }
 
     @AfterClass
     public void teardownContext() {
+        // Clear the page thread-local before tearing down — prevents stale references in the listener
+        CURRENT_PAGE.remove();
         // Tear down the entire per-class Playwright stack
         if (context != null) { try { context.close(); } catch (Exception ignored) {} context = null; page = null; }
         if (browser != null)  { try { browser.close();  } catch (Exception ignored) {} browser = null; }
@@ -346,15 +489,24 @@ public class BaseTest {
         }
         
         // Step 5: Wait for dashboard to load
+        // Use waitForLoadState + direct URL check instead of waitForURL to handle
+        // Zoho's SPA hash-based routing, which may not trigger Playwright navigation events.
         System.out.println("Step 5: Waiting for Zoho People dashboard to load");
         try {
-            page.waitForURL(
-                    url -> url.startsWith(Config.BASE_URL + "/") &&
-                           (url.contains("/zp") || url.contains("/home") || url.contains("/dashboard")),
-                    new Page.WaitForURLOptions().setTimeout(15000)
-            );
-            
+            page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
+                    new Page.WaitForLoadStateOptions().setTimeout(20000));
+            // Allow SPA router to settle after the login redirect
+            page.waitForTimeout(2000);
             String finalUrl = page.url();
+            System.out.println("Post-login URL: " + finalUrl);
+
+            if (finalUrl.contains("accounts.zoho.com") || finalUrl.contains("signin")) {
+                throw new PlaywrightException("Login failed — still on auth page: " + finalUrl);
+            }
+            if (!finalUrl.contains("zoho.com")) {
+                throw new PlaywrightException("Unexpected URL after login (not a Zoho domain): " + finalUrl);
+            }
+
             System.out.println("✅ Login successful! Landed on: " + finalUrl);
 
             // Save session cookies — synchronized to prevent concurrent writes on first parallel run

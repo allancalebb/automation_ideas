@@ -155,20 +155,20 @@ public class PeoplePageTest extends BaseTest {
 
         goToSettings();
 
-        // Confirmed via DOM: h5 "Allan's Test Account Org" in the Settings header
-        page.waitForSelector("h5:has-text(\"Allan's Test Account Org\")",
+        // Confirmed via DOM: h5 "Xero Allan Account" in the Settings header
+        page.waitForSelector("h5:has-text('Xero Allan Account')",
                 new Page.WaitForSelectorOptions().setTimeout(15000));
 
-        String orgName = page.locator("h5:has-text(\"Allan's Test Account Org\")").innerText().trim();
-        String locatorUsed = "h5:has-text(\"Allan's Test Account Org\") (org name in Settings header)";
+        String orgName = page.locator("h5:has-text('Xero Allan Account')").innerText().trim();
+        String locatorUsed = "h5:has-text('Xero Allan Account') (org name in Settings header)";
         System.out.println("[Locator] " + locatorUsed);
         Allure.parameter("Locator / Condition", locatorUsed);
         Allure.parameter("Org name", orgName);
 
-        Assert.assertEquals(orgName, "Allan's Test Account Org",
+        Assert.assertEquals(orgName, "Xero Allan Account",
                 "Org name mismatch. Got: '" + orgName + "'");
 
-        takeElementScreenshot("h5:has-text(\"Allan's Test Account Org\")", "org_name_people_test");
-        System.out.println("✅ Test PASSED: Org name 'Allan's Test Account Org' confirmed");
+        takeElementScreenshot("h5:has-text('Xero Allan Account')", "org_name_people_test");
+        System.out.println("✅ Test PASSED: Org name 'Xero Allan Account' confirmed");
     }
 }

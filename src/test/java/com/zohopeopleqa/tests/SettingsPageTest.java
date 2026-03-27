@@ -111,20 +111,20 @@ public class SettingsPageTest extends BaseTest {
     public void verifyOrgNameInSettingsHeader() {
         System.out.println("Verifying org name is displayed in Settings header...");
 
-        // Confirmed via DOM inspection: h5 with text "Allan's Test Account Org" inside settings page header
-        page.waitForSelector("h5:has-text(\"Allan's Test Account Org\")",
+        // Confirmed via DOM inspection: h5 with the org name inside settings page header
+        page.waitForSelector("h5:has-text('Xero Allan Account')",
                 new Page.WaitForSelectorOptions().setTimeout(10000));
 
-        String actualText = page.locator("h5:has-text(\"Allan's Test Account Org\")").innerText().trim();
-        String locatorUsed = "h5:has-text(\"Allan's Test Account Org\") (org name heading, Settings header)";
+        String actualText = page.locator("h5:has-text('Xero Allan Account')").innerText().trim();
+        String locatorUsed = "h5:has-text('Xero Allan Account') (org name heading, Settings header)";
         System.out.println("[Locator] " + locatorUsed);
         Allure.parameter("Locator / Condition", locatorUsed);
         Allure.parameter("Org name text", actualText);
-        Assert.assertEquals(actualText, "Allan's Test Account Org",
+        Assert.assertEquals(actualText, "Xero Allan Account",
                 "Org name heading text mismatch. Got: '" + actualText + "'");
 
-        takeElementScreenshot("h5:has-text(\"Allan's Test Account Org\")", "org_name_settings_header");
-        System.out.println("✅ Test PASSED: Org name 'Allan's Test Account Org' is displayed");
+        takeElementScreenshot("h5:has-text('Xero Allan Account')", "org_name_settings_header");
+        System.out.println("✅ Test PASSED: Org name 'Xero Allan Account' is displayed");
     }
 
     @TmsLink("ZP-043")
