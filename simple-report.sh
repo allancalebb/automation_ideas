@@ -131,6 +131,13 @@ cat > "$REPORT_FILE" << HTMLEOF
         details summary:hover { color: #764ba2; }
         .logs-content { margin-top: 10px; background: #f5f5f5; padding: 15px; border-radius: 4px; border-left: 3px solid #667eea; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
         .error-msg { color: #ef4444; font-size: 12px; margin-top: 8px; }
+        .filter-bar { display: flex; gap: 10px; padding: 0 0 20px; }
+        .filter-btn { padding: 8px 20px; border: 2px solid #e5e7eb; border-radius: 20px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .filter-btn:hover { border-color: #667eea; color: #667eea; }
+        .filter-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        .filter-btn.active-pass { background: #10b981; color: white; border-color: #10b981; }
+        .filter-btn.active-fail { background: #ef4444; color: white; border-color: #ef4444; }
+        .test-result.hidden { display: none; }
         .footer { padding: 20px 30px; background: #f9f9f9; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
         .env-bar { display:flex; flex-wrap:wrap; background:#1a1a2e; border-bottom:3px solid #667eea; }
         .env-item { display:flex; flex-direction:column; padding:12px 24px; border-right:1px solid #2d2d50; }
@@ -177,6 +184,24 @@ cat > "$REPORT_FILE" << HTMLEOF
             <div class="stat failed"><div class="stat-number">$FAILED</div><div class="stat-label">Failed</div></div>        <div class="stat skipped"><div class="stat-number">$SKIPPED</div><div class="stat-label">Skipped</div></div>        </div>
         <div class="content">
             <h2 style="margin-bottom: 20px;">Test Results</h2>
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterTests('all', this)">All ($TOTAL)</button>
+                <button class="filter-btn" onclick="filterTests('passed', this)">&#10003; Passed ($PASSED)</button>
+                <button class="filter-btn" onclick="filterTests('failed', this)">&#10007; Failed ($FAILED)</button>
+            </div>
+            <script>
+            function filterTests(status, btn) {
+                document.querySelectorAll('.filter-btn').forEach(function(b) { b.className = 'filter-btn'; });
+                if (status === 'passed') btn.className = 'filter-btn active-pass';
+                else if (status === 'failed') btn.className = 'filter-btn active-fail';
+                else btn.className = 'filter-btn active';
+                document.querySelectorAll('.test-result').forEach(function(el) {
+                    if (status === 'all') { el.classList.remove('hidden'); }
+                    else if (el.classList.contains(status)) { el.classList.remove('hidden'); }
+                    else { el.classList.add('hidden'); }
+                });
+            }
+            </script>
 HTMLEOF
 
 # Append one block per test directly to file

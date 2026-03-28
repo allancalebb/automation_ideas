@@ -573,8 +573,9 @@ public class BaseTest {
     private void saveScreenshotDiskOnly(String name) {
         try {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-            String filename = String.format("screenshots/%s_%s.png", name, timestamp);
-            new File("screenshots").mkdirs();
+            String screenshotDir = "screenshots/" + Config.ENV;
+            String filename = String.format("%s/%s_%s.png", screenshotDir, name, timestamp);
+            new File(screenshotDir).mkdirs();
             page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(filename)));
             System.out.println("Backup screenshot saved: " + filename);
         } catch (Exception e) {
@@ -589,7 +590,9 @@ public class BaseTest {
         waitForPageReady();
         try {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-            String filename = String.format("screenshots/%s_%s.png", name, timestamp);
+            String screenshotDir = "screenshots/" + Config.ENV;
+            String filename = String.format("%s/%s_%s.png", screenshotDir, name, timestamp);
+            new File(screenshotDir).mkdirs();
             page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(filename)));
             
             // Attach to Allure report
@@ -620,10 +623,12 @@ public class BaseTest {
     protected void takeElementScreenshot(String selector, String name) {
         waitForPageReady();
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+        String screenshotDir = "screenshots/" + Config.ENV;
+        new File(screenshotDir).mkdirs();
 
         // --- 1. Full-page screenshot (always first) ---
         try {
-            String fullPageFile = String.format("screenshots/%s_fullpage_%s.png", name, timestamp);
+            String fullPageFile = String.format("%s/%s_fullpage_%s.png", screenshotDir, name, timestamp);
             page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(fullPageFile)));
             byte[] fullPageBytes = Files.readAllBytes(Paths.get(fullPageFile));
             Allure.addAttachment("1. Full Page — " + name, "image/png",
@@ -635,7 +640,7 @@ public class BaseTest {
 
         // --- 2. Element-scoped screenshot (below full-page) ---
         try {
-            String elementFile = String.format("screenshots/%s_element_%s.png", name, timestamp);
+            String elementFile = String.format("%s/%s_element_%s.png", screenshotDir, name, timestamp);
             Locator locator = page.locator(selector);
             boolean foundAndVisible = locator.count() > 0 && locator.first().isVisible();
 

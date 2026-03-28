@@ -67,17 +67,17 @@ public class EnvLoader {
     public static String get(String key) {
         String value = null;
         
-        // Priority 1: Try to get from .env file (already loaded)
-        value = envVars.get(key);
-        if (value != null) {
-            System.out.println("✅ Using '" + key + "' from .env file (length: " + value.length() + ", value: " + value + ")");
-            return value;
-        }
-        
-        // Priority 2: Try system environment variables
+        // Priority 1: System environment variables (allows CLI overrides like ZOHO_ENV=test mvn test)
         value = System.getenv(key);
         if (value != null) {
             System.out.println("✅ Using '" + key + "' from system environment (length: " + value.length() + ")");
+            return value;
+        }
+        
+        // Priority 2: .env file
+        value = envVars.get(key);
+        if (value != null) {
+            System.out.println("✅ Using '" + key + "' from .env file (length: " + value.length() + ", value: " + value + ")");
             return value;
         }
         

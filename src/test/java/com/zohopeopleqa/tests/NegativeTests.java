@@ -3,6 +3,7 @@ package com.zohopeopleqa.tests;
 import com.zohopeopleqa.base.BaseTest;
 import com.zohopeopleqa.config.Config;
 import com.zohopeopleqa.pages.NavBar;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;
 
@@ -165,9 +166,13 @@ public class NegativeTests extends BaseTest {
     public void verifyAllLeaveTabsAccessible() {
         System.out.println("Verifying all Leave Tracker tabs are accessible...");
 
-        page.locator(NavBar.LEAVE_TAB).first().click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
-        page.waitForSelector("#tltabcontainer", new Page.WaitForSelectorOptions().setTimeout(10000));
+        // Navigate directly to Leave Tracker via URL — more reliable under parallel load than SPA tab click
+        String leaveUrl = page.url().replaceFirst("#.*", "#leavetracker/mydata/summary-mode:list");
+        page.navigate(leaveUrl);
+        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(30000));
+        // Wait for the first tab to be VISIBLE — not just present in DOM
+        page.waitForSelector("#zp_t_leavetracker_mydata",
+                new Page.WaitForSelectorOptions().setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE).setTimeout(30000));
 
         String[] tabs    = { "My Data",                    "Team",                         "Holidays" };
         String[] tabIds  = { "#zp_t_leavetracker_mydata", "#zp_t_leavetracker_team", "#zp_t_leavetracker_holiday" };
@@ -176,8 +181,11 @@ public class NegativeTests extends BaseTest {
             String tabId = tabIds[i];
             System.out.println("Clicking tab: " + tab + " (" + tabId + ")");
             try {
-                page.locator(tabId).first().click();
-                page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(10000));
+                // Wait for this specific tab to be VISIBLE before clicking
+                page.waitForSelector(tabId,
+                        new Page.WaitForSelectorOptions().setState(com.microsoft.playwright.options.WaitForSelectorState.VISIBLE).setTimeout(30000));
+                page.locator(tabId).first().click(new Locator.ClickOptions().setTimeout(30000));
+                page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(20000));
                 String url = page.url();
                 boolean onZohoPeople = url.contains(Config.BASE_DOMAIN) && !url.contains("login");
                 Allure.parameter(tab + " URL", url);
@@ -190,10 +198,6 @@ public class NegativeTests extends BaseTest {
         }
 
         takeScreenshotOnSuccess("all_leave_tabs_accessible");
-
-        // Return to My Data
-        page.locator("#zp_t_leavetracker_mydata").first().click();
-        page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(10000));
         System.out.println("✅ Test PASSED: All Leave Tracker tabs accessible without errors");
     }
 }
