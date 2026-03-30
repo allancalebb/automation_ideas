@@ -42,10 +42,24 @@ run_env() {
     rm -rf "screenshots/${ENV_NAME}"
     mkdir -p "screenshots/${ENV_NAME}"
 
+    # Back up existing allure results from other environments before clean
+    local BACKUP_DIR=$(mktemp -d)
+    for dir in target/allure-results-raw/compare_*; do
+        [ -d "$dir" ] && cp -r "$dir" "$BACKUP_DIR/"
+    done
+
     # Run Maven tests with the environment override
     ZOHO_ENV="$ENV_NAME" mvn clean test \
         -Dallure.results.directory="target/allure-results-raw/compare_${ENV_NAME}" \
         2>&1 | tee "target/logs/compare_${ENV_NAME}.log" || true
+
+    # Restore backed-up allure results from other environments
+    for dir in "$BACKUP_DIR"/compare_*; do
+        [ -d "$dir" ] && local dirname=$(basename "$dir")
+        [ "$dirname" != "compare_${ENV_NAME}" ] && [ -d "$dir" ] && \
+            cp -r "$dir" "target/allure-results-raw/"
+    done
+    rm -rf "$BACKUP_DIR"
 
     # Count results
     local RESULTS_DIR="target/allure-results-raw/compare_${ENV_NAME}"
@@ -88,8 +102,8 @@ echo "════════════════════════�
 
 REPORT_DIR="target/simple-reports"
 mkdir -p "$REPORT_DIR"
-TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-REPORT_FILE="${REPORT_DIR}/EnvComparison_${TIMESTAMP}.html"
+REPORT_FILE="${REPORT_DIR}/EnvComparison.html"
+export REPORT_FILE
 
 LIVE_DIR="screenshots/live"
 TEST_DIR="screenshots/test"
@@ -109,15 +123,21 @@ echo "   Test screenshots: ${TEST_COUNT}"
 
 # Build the comparison report using Python for robust JSON/file processing
 python3 << 'PYEOF'
-import os, glob, re, html, base64, json
+import os, glob, re, html, base64, json, io
 from datetime import datetime
+
+try:
+    from PIL import Image
+    HAS_PILLOW = True
+except ImportError:
+    HAS_PILLOW = False
+    print("⚠️  Pillow not installed — pixel-diff disabled. Install with: pip3 install Pillow")
 
 live_dir = "screenshots/live"
 test_dir = "screenshots/test"
 
 def strip_timestamp(filename):
     """Remove the timestamp suffix from screenshot filenames to get a canonical name."""
-    # Pattern: name_2026-03-26_17-32-57.png → name
     return re.sub(r'_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$', '', filename)
 
 def get_screenshots(directory):
@@ -126,7 +146,6 @@ def get_screenshots(directory):
     for f in sorted(glob.glob(os.path.join(directory, '*.png'))):
         basename = os.path.basename(f)
         canonical = strip_timestamp(basename)
-        # sorted() means later timestamps overwrite earlier — keeps latest
         shots[canonical] = f
     return shots
 
@@ -138,6 +157,65 @@ def img_to_base64(filepath):
         return f'data:image/png;base64,{data}'
     except:
         return ''
+
+def pil_img_to_base64(pil_img):
+    """Convert a PIL Image to base64 data URI."""
+    buf = io.BytesIO()
+    pil_img.save(buf, format='PNG')
+    data = base64.b64encode(buf.getvalue()).decode('utf-8')
+    return f'data:image/png;base64,{data}'
+
+def compute_diff(live_path, test_path, threshold=30):
+    """Compare two screenshots pixel-by-pixel. Returns (diff_base64, diff_pct, total_pixels)."""
+    if not HAS_PILLOW:
+        return None, 0.0, 0
+
+    try:
+        img_live = Image.open(live_path).convert('RGBA')
+        img_test = Image.open(test_path).convert('RGBA')
+
+        # Resize to common dimensions (use the larger canvas)
+        w = max(img_live.width, img_test.width)
+        h = max(img_live.height, img_test.height)
+
+        canvas_live = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        canvas_test = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        canvas_live.paste(img_live, (0, 0))
+        canvas_test.paste(img_test, (0, 0))
+
+        px_live = canvas_live.load()
+        px_test = canvas_test.load()
+
+        diff_img = Image.new('RGBA', (w, h), (0, 0, 0, 255))
+        px_diff = diff_img.load()
+
+        diff_count = 0
+        total = w * h
+
+        for y in range(h):
+            for x in range(w):
+                r1, g1, b1, a1 = px_live[x, y]
+                r2, g2, b2, a2 = px_test[x, y]
+                dr = abs(r1 - r2)
+                dg = abs(g1 - g2)
+                db = abs(b1 - b2)
+                da = abs(a1 - a2)
+
+                if dr + dg + db + da > threshold:
+                    # Highlight diff pixels in red on a dimmed background
+                    intensity = min(255, (dr + dg + db + da) * 2)
+                    px_diff[x, y] = (255, 0, 0, intensity)
+                    diff_count += 1
+                else:
+                    # Unchanged pixels shown dimmed
+                    avg = (r1 + g1 + b1) // 3
+                    px_diff[x, y] = (avg // 3, avg // 3, avg // 3, 200)
+
+        diff_pct = (diff_count / total * 100) if total > 0 else 0.0
+        return pil_img_to_base64(diff_img), diff_pct, total
+    except Exception as e:
+        print(f"  ⚠️  Diff failed: {e}")
+        return None, 0.0, 0
 
 def get_test_results(env_name):
     """Extract pass/fail status per test method from allure results."""
@@ -164,6 +242,19 @@ live_shots = get_screenshots(live_dir)
 test_shots = get_screenshots(test_dir)
 all_names = sorted(set(list(live_shots.keys()) + list(test_shots.keys())))
 
+# Pre-compute diffs for screenshots that exist in both environments
+diff_data = {}  # canonical_name → (diff_b64, diff_pct)
+if HAS_PILLOW:
+    paired = [n for n in all_names if n in live_shots and n in test_shots]
+    print(f"🔍 Computing pixel diffs for {len(paired)} paired screenshots...")
+    for i, name in enumerate(paired):
+        diff_b64, diff_pct, _ = compute_diff(live_shots[name], test_shots[name])
+        diff_data[name] = (diff_b64, diff_pct)
+        if (i + 1) % 10 == 0:
+            print(f"   Processed {i+1}/{len(paired)} diffs...")
+    print(f"✅ Pixel diffs computed for {len(paired)} screenshots")
+    has_diff_count = sum(1 for _, (_, pct) in diff_data.items() if pct > 0.5)
+
 live_results = get_test_results("live")
 test_results = get_test_results("test")
 
@@ -171,6 +262,8 @@ test_results = get_test_results("test")
 both_count = sum(1 for n in all_names if n in live_shots and n in test_shots)
 live_only = sum(1 for n in all_names if n in live_shots and n not in test_shots)
 test_only = sum(1 for n in all_names if n not in live_shots and n in test_shots)
+has_diff_count_val = has_diff_count if HAS_PILLOW else 0
+identical_count = both_count - has_diff_count_val
 
 # Filter to only "success_" screenshots for the main comparison (skip error/login debug shots)
 success_names = [n for n in all_names if n.startswith('success_')]
@@ -214,12 +307,18 @@ report_html = f'''<!DOCTYPE html>
     .badge.missing {{ background: #78350f; color: #fbbf24; }}
     .badge.live-label {{ background: #164e63; color: #22d3ee; }}
     .badge.test-label {{ background: #4c1d95; color: #a78bfa; }}
+    .badge.diff-identical {{ background: #065f46; color: #34d399; }}
+    .badge.diff-low {{ background: #365314; color: #a3e635; }}
+    .badge.diff-medium {{ background: #78350f; color: #fbbf24; }}
+    .badge.diff-high {{ background: #7f1d1d; color: #fca5a5; }}
     .comp-body {{ display: flex; gap: 0; }}
     .comp-side {{ flex: 1; padding: 10px; text-align: center; position: relative; }}
     .comp-side.live {{ border-right: 1px solid #334155; }}
+    .comp-side.diff {{ border-left: 1px solid #334155; background: #111827; }}
     .comp-side img {{ max-width: 100%; height: auto; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }}
     .comp-side img:hover {{ transform: scale(1.02); }}
     .comp-side .env-label {{ font-size: 11px; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }}
+    .diff-pct {{ font-size: 13px; font-weight: 700; margin-top: 6px; }}
     .no-img {{ padding: 60px 20px; color: #475569; font-style: italic; }}
     .modal-overlay {{ display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; cursor: zoom-out; }}
     .modal-overlay.active {{ display: flex; }}
@@ -242,6 +341,8 @@ report_html = f'''<!DOCTYPE html>
     <div class="stat live"><div class="number">{live_only}</div><div class="label">Live Only</div></div>
     <div class="stat test"><div class="number">{test_only}</div><div class="label">Test Only</div></div>
     <div class="stat"><div class="number" style="color:#f8fafc">{len(all_names)}</div><div class="label">Total Screenshots</div></div>
+    <div class="stat"><div class="number" style="color:#34d399">{identical_count}</div><div class="label">Identical</div></div>
+    <div class="stat"><div class="number" style="color:#fca5a5">{has_diff_count_val}</div><div class="label">Has Differences</div></div>
 </div>
 
 <div class="stats">
@@ -258,18 +359,19 @@ report_html = f'''<!DOCTYPE html>
     <button class="filter-btn" onclick="filterComparisons('both')">In Both Envs</button>
     <button class="filter-btn" onclick="filterComparisons('live-only')">Live Only</button>
     <button class="filter-btn" onclick="filterComparisons('test-only')">Test Only</button>
+    <button class="filter-btn" onclick="filterComparisons('has-diff')">Has Differences</button>
+    <button class="filter-btn" onclick="filterComparisons('identical')">Identical</button>
 </div>
 
 <div id="comparisons">
 '''
 
 def render_comparison(canonical_name, live_path, test_path, is_success=True):
-    """Render a single comparison card."""
+    """Render a single comparison card with optional diff column."""
     display_name = canonical_name
     if display_name.startswith('success_'):
-        display_name = display_name[8:]  # Remove success_ prefix for cleaner display
+        display_name = display_name[8:]
 
-    # Determine test method name for result lookup
     method_name = display_name
 
     live_status = live_results.get(method_name, '')
@@ -280,7 +382,14 @@ def render_comparison(canonical_name, live_path, test_path, is_success=True):
     category = 'success' if is_success else 'other'
     availability = 'both' if (has_live and has_test) else ('live-only' if has_live else 'test-only')
 
-    card = f'<div class="comparison" data-category="{category}" data-availability="{availability}">\n'
+    # Get diff data if available
+    diff_b64, diff_pct = diff_data.get(canonical_name, (None, 0.0))
+    has_visual_diff = diff_b64 is not None and diff_pct > 0.5
+    diff_level = 'identical'
+    if diff_pct > 0.5:
+        diff_level = 'has-diff'
+
+    card = f'<div class="comparison" data-category="{category}" data-availability="{availability}" data-diff="{diff_level}">\n'
     card += f'  <div class="comp-header">\n'
     card += f'    <span class="name">{html.escape(display_name)}</span>\n'
     card += f'    <div class="badges">\n'
@@ -295,6 +404,17 @@ def render_comparison(canonical_name, live_path, test_path, is_success=True):
     elif not has_test:
         card += f'      <span class="badge missing">No Test</span>\n'
 
+    # Diff badge
+    if diff_b64 is not None:
+        if diff_pct <= 0.5:
+            card += f'      <span class="badge diff-identical">IDENTICAL</span>\n'
+        elif diff_pct <= 5.0:
+            card += f'      <span class="badge diff-low">{diff_pct:.1f}% diff</span>\n'
+        elif diff_pct <= 20.0:
+            card += f'      <span class="badge diff-medium">{diff_pct:.1f}% diff</span>\n'
+        else:
+            card += f'      <span class="badge diff-high">{diff_pct:.1f}% diff</span>\n'
+
     card += f'    </div>\n'
     card += f'  </div>\n'
     card += f'  <div class="comp-body">\n'
@@ -308,6 +428,15 @@ def render_comparison(canonical_name, live_path, test_path, is_success=True):
     else:
         card += f'      <div class="no-img">No screenshot captured</div>\n'
     card += f'    </div>\n'
+
+    # Diff side (only when both exist and Pillow computed a diff)
+    if diff_b64 is not None:
+        diff_color = '#34d399' if diff_pct <= 0.5 else '#fbbf24' if diff_pct <= 5.0 else '#fca5a5'
+        card += f'    <div class="comp-side diff">\n'
+        card += f'      <div class="env-label">Pixel Diff</div>\n'
+        card += f'      <img src="{diff_b64}" alt="Diff - {html.escape(display_name)}" onclick="openModal(this)" loading="lazy"/>\n'
+        card += f'      <div class="diff-pct" style="color:{diff_color}">{diff_pct:.2f}% pixels differ</div>\n'
+        card += f'    </div>\n'
 
     # Test side
     card += f'    <div class="comp-side">\n'
@@ -360,6 +489,7 @@ function filterComparisons(filter) {
     document.querySelectorAll('.comparison').forEach(card => {
         const cat = card.dataset.category;
         const avail = card.dataset.availability;
+        const diff = card.dataset.diff;
         let show = false;
 
         if (filter === 'all') show = true;
@@ -368,6 +498,8 @@ function filterComparisons(filter) {
         else if (filter === 'both') show = avail === 'both';
         else if (filter === 'live-only') show = avail === 'live-only';
         else if (filter === 'test-only') show = avail === 'test-only';
+        else if (filter === 'has-diff') show = diff === 'has-diff';
+        else if (filter === 'identical') show = diff === 'identical';
 
         card.classList.toggle('hidden', !show);
     });

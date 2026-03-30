@@ -145,6 +145,9 @@ public class NegativeTests extends BaseTest {
         // Settings
         page.click(NavBar.SETTINGS_TAB);
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        // Wait for Settings page content to fully render before screenshot
+        page.waitForSelector("#servicPageContainer",
+                new Page.WaitForSelectorOptions().setTimeout(15000));
         String settingsUrl = page.url();
         Assert.assertTrue(settingsUrl.contains(Config.BASE_DOMAIN) && !settingsUrl.contains("login"),
                 "Settings page should not redirect to login. Got: '" + settingsUrl + "'");

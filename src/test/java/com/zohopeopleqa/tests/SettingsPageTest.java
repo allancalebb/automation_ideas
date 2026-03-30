@@ -53,6 +53,10 @@ public class SettingsPageTest extends BaseTest {
         page.waitForLoadState(LoadState.LOAD,
                 new Page.WaitForLoadStateOptions().setTimeout(15000));
 
+        // Wait for Settings page content to fully render before screenshot
+        page.waitForSelector("#servicPageContainer",
+                new Page.WaitForSelectorOptions().setTimeout(15000));
+
         String url = page.url();
         boolean isOnSettingsPage = url.contains("admin") || url.contains("setting") || url.contains("Setting");
         String locatorUsed = "#zp_maintab_admin → page.url() contains 'admin' or 'setting'";
@@ -93,6 +97,9 @@ public class SettingsPageTest extends BaseTest {
         // present on all Zoho People pages after navigation
         page.waitForSelector("#page-wrapper",
                 new Page.WaitForSelectorOptions().setTimeout(10000));
+        // Wait for the service tiles to render inside the settings page
+        page.waitForSelector("#servicPageContainer",
+                new Page.WaitForSelectorOptions().setTimeout(15000));
         boolean hasContent = page.isVisible("#page-wrapper");
         String locatorUsed = "#page-wrapper (main content area visible after admin navigation)";
         System.out.println("[Locator] " + locatorUsed);
@@ -233,6 +240,9 @@ public class SettingsPageTest extends BaseTest {
         System.out.println("Clicking Leave Tracker settings tile to validate navigation...");
         page.locator("#servicPageContainer h5:has-text('Leave Tracker')").first().click();
         page.waitForLoadState(LoadState.LOAD, new Page.WaitForLoadStateOptions().setTimeout(15000));
+        // Wait for the Leave settings sub-page content to render
+        page.waitForSelector("#page-wrapper",
+                new Page.WaitForSelectorOptions().setTimeout(15000));
         String subUrl = page.url();
         System.out.println("URL after clicking Leave Tracker settings tile: " + subUrl);
         Allure.parameter("Leave Tracker settings sub-page URL", subUrl);

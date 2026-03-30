@@ -31,6 +31,10 @@ public class ReportsPageTest extends BaseTest {
         page.waitForLoadState(LoadState.LOAD,
                 new Page.WaitForLoadStateOptions().setTimeout(10000));
 
+        // Wait for Reports page content to fully render before screenshot
+        page.waitForSelector("#searchreports",
+                new Page.WaitForSelectorOptions().setTimeout(15000));
+
         String url = page.url();
         boolean isOnReportsPage = url.contains("report") || url.contains("Report");
         String locatorUsed = "page.url() contains 'report'";

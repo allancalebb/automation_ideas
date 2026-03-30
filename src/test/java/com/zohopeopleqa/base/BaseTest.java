@@ -117,7 +117,7 @@ public class BaseTest {
         java.nio.file.Path sessionPath = Paths.get(SESSION_STATE_FILE);
         java.nio.file.Path metaPath    = Paths.get(SESSION_META_FILE);
 
-        // Discard session if ZOHO_USER has changed
+        // Discard session if ZOHO_USER or environment has changed
         if (Files.exists(sessionPath) && Files.exists(metaPath)) {
             try {
                 String meta = new String(Files.readAllBytes(metaPath));
@@ -125,6 +125,10 @@ public class BaseTest {
                     Files.deleteIfExists(sessionPath);
                     Files.deleteIfExists(metaPath);
                     System.out.println("[Suite] ZOHO_USER changed — discarding stale session.");
+                } else if (!meta.contains("\"env\":\"" + Config.ENV + "\"")) {
+                    Files.deleteIfExists(sessionPath);
+                    Files.deleteIfExists(metaPath);
+                    System.out.println("[Suite] Environment changed to " + Config.ENV.toUpperCase() + " — discarding stale session.");
                 }
             } catch (Exception ignored) {}
         }
@@ -260,7 +264,7 @@ public class BaseTest {
 
             // Save session
             ctx.storageState(new BrowserContext.StorageStateOptions().setPath(sessionPath));
-            Files.write(metaPath, ("{\"user\":\"" + email + "\"}").getBytes());
+            Files.write(metaPath, ("{\"user\":\"" + email + "\",\"env\":\"" + Config.ENV + "\"}").getBytes());
             System.out.println("[Suite] Session saved for: " + email);
             ctx.close(); b.close();
         } catch (Exception e) {
@@ -306,9 +310,20 @@ public class BaseTest {
         page.setDefaultNavigationTimeout(45000);
 
         // Navigate to the app — with valid cookies this goes straight in, no login page
-        page.navigate(Config.BASE_URL);
-        page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
-                new Page.WaitForLoadStateOptions().setTimeout(45000));
+        // Retry once if the first attempt times out (TEST env can be slow under parallel load)
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                page.navigate(Config.BASE_URL,
+                        new Page.NavigateOptions().setTimeout(60000));
+                page.waitForLoadState(com.microsoft.playwright.options.LoadState.DOMCONTENTLOADED,
+                        new Page.WaitForLoadStateOptions().setTimeout(60000));
+                break; // success
+            } catch (Exception e) {
+                if (attempt == 2) throw e;
+                System.out.println("[" + getClass().getSimpleName() + "] Navigation attempt " + attempt + " timed out, retrying...");
+                page.waitForTimeout(2000);
+            }
+        }
         page.waitForTimeout(2000);
         String url = page.url();
         if (url.contains("accounts.zoho.com") || url.contains("/signin")) {
@@ -542,6 +557,11 @@ public class BaseTest {
                     new Page.WaitForLoadStateOptions().setTimeout(10000));
         } catch (Exception ignored) {}
         try {
+            // Wait for the main Zoho People app shell to be present
+            page.waitForSelector("#page-wrapper, #servicPageContainer, .zp-mainWrapper, [class*='mainContent']",
+                    new Page.WaitForSelectorOptions().setTimeout(8000));
+        } catch (Exception ignored) {}
+        try {
             // Wait for common Zoho loading spinners/overlays to disappear
             // These are the typical loading indicators found in Zoho People
             String[] spinnerSelectors = {
@@ -562,8 +582,8 @@ public class BaseTest {
                 } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
-        // Final short settle — lets any CSS transitions/animations finish painting
-        page.waitForTimeout(500);
+        // Final settle — lets CSS transitions/animations finish painting
+        page.waitForTimeout(1000);
     }
 
     /**
@@ -588,6 +608,7 @@ public class BaseTest {
      */
     protected void takeScreenshot(String name) {
         waitForPageReady();
+        page.waitForTimeout(1000); // extra settle before capture
         try {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
             String screenshotDir = "screenshots/" + Config.ENV;
@@ -622,6 +643,7 @@ public class BaseTest {
      */
     protected void takeElementScreenshot(String selector, String name) {
         waitForPageReady();
+        page.waitForTimeout(1000); // extra settle before capture
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
         String screenshotDir = "screenshots/" + Config.ENV;
         new File(screenshotDir).mkdirs();
